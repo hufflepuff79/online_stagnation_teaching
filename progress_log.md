@@ -20,4 +20,4 @@ Introduction and discussion of the milestone for the first week and rough plan f
 
 ## Submission Final Project (27.07.2021)
 
-## Presentation (03.08.2021
+## Presentation (03.08.2021)
