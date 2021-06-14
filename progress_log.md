@@ -6,7 +6,7 @@ Introduction and discussion of the milestone for the first week and rough plan f
 
 ## Meeting Two (14.06.2021)
 - Discussion of the pipeline (high level pipeling complete)
-![High Level Project Pipeline](/online_stagnation_teaching/project_images/high_level_proj_pipeline.png)
+![High Level Project Pipeline](project_images/high_level_proj_pipeline.png)
 - Discussion of modular structure for project pipeline implementation (in progress)
 
 After meeting TODOs:
