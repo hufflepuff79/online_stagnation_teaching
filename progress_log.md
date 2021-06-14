@@ -6,6 +6,7 @@ Introduction and discussion of the milestone for the first week and rough plan f
 
 ## Meeting Two (14.06.2021)
 - Discussion of the pipeline (high level pipeling complete)
+![High Level Project Pipeline](/online_stagnation_teaching/project_images/high_level_proj_pipeline.png)
 - Discussion of modular structure for project pipeline implementation (in progress)
 
 After meeting TODOs:
@@ -14,7 +15,7 @@ After meeting TODOs:
 - [ ] Define experiments we want to conduct in scope of project
 
 ##  Project Milestone 1 (15.06.2021)
-- [ ] Read and understand [An Optimistic Perspective on Offline Reinforcement Learning](https://arxiv.org/pdf/1907.04543.pdf)
+- [x] Read and understand [An Optimistic Perspective on Offline Reinforcement Learning](https://arxiv.org/pdf/1907.04543.pdf)
 - [ ] Refresh RL knowledge with [RL Tutorial](https://github.com/andri27-ts/Reinforcement-Learning) and [Offline RL Tutorial Paper](https://arxiv.org/pdf/2005.01643.pdf#cite.kalashnikov2018qtopt)
 - [ ] Visualize the training pipeline
 - [ ] Gain Access to the AIS computers
@@ -25,7 +26,10 @@ After meeting TODOs:
     - [ ] Test running the original implementation
     - [ ] Visualize a sample of the dataset
     - [ ] Code the agent as presented in the paper
-    - [ ] Code the network as presented in the paper 
+    - [ ] Code the network as presented in the paper
+    - [ ] Code the training pipeline
+    - [ ] Define experiments for the project
+    - [ ] Complete experiments
 
 ##  Project Milestone 3 (13.07.2021)
 - [ ] Implementation of the other baselines
