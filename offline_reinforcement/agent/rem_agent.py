@@ -7,7 +7,7 @@ device = torch.device("cuda" if torch.cuda.is_available else "cpu")
 
 class REMAgent:
 
-    def __init__(self, Q, Q_target, data_dir):
+    def __init__(self, Q: nn.Module, Q_target: nn.Module, data_dir: str):
         
         # setup networks
         self.Q = Q.to(device)

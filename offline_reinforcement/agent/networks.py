@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 class REM(nn.Module):
 
-    def __init__(self, num_actions=18, num_heads=200):
+    def __init__(self, num_actions: int = 18, num_heads: int = 200):
         super(REM, self).__init__()
 
         self.num_heads = num_heads
@@ -21,7 +21,7 @@ class REM(nn.Module):
         self.flatten = nn.Flatten()
 
 
-    def forward(self, x, alphas):
+    def forward(self, x: torch.Tensor, alphas: list):
         """
         Forward pass of REM-Network
 
@@ -49,7 +49,7 @@ class REM(nn.Module):
 if __name__ == "__main__":
 
     x = torch.ones(size=(2, 4, 84, 84))
-    alphas = [0]*200
+    alphas = np.array([0]*200)
     net = REM()
     out = net(x, alphas)
     print(out)
