@@ -29,7 +29,7 @@ class REMAgent:
         self.loss_function = torch.nn.SmoothL1Loss(beta=1.0)
     
 
-    def train_batch(self):
+    def train_batch(self) -> None:
         
         # sample replay buffer
         batch_states, batch_actions, batch_next_states, batch_rewards, batch_done = self.replay_buffer.next_batch(self.batch_size)
@@ -48,9 +48,17 @@ class REMAgent:
         self.optimizer.step()
 
 
-    def update_target(self):
-
+    def update_target(self) -> None:
         self.Q_target.load_state_dict(self.Q.state_dict())
 
-    def act(self, X_batch):
-        raise NotImplementedError
+    
+    def act(self, state: torch.Tensor, deterministic: bool, distribution=None) -> int:
+        
+        r = np.random.uniform()
+
+        if deterministic or r > self.epsilon:
+            action_id = np.argmax(self.Q(state).detach().numpy())
+        else:
+            action_id = np.random.choice(a=self.num_actions, p=distribution)
+
+        return action_id
