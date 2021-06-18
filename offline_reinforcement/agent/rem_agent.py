@@ -1,9 +1,11 @@
 import tensorflow as tf
 import torch
+import torch.nn as nn
 from agent.networks import REM
 from agent.replay_buffer import ReplayBuffer
+import numpy as np
 
-device = torch.device("cuda" if torch.cuda.is_available else "cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class REMAgent:
 
@@ -32,7 +34,7 @@ class REMAgent:
     def train_batch(self) -> None:
         
         # sample replay buffer
-        batch_states, batch_actions, batch_next_states, batch_rewards, batch_done = self.replay_buffer.get_minibatch(self.batch_size)
+        batch_states, batch_actions, batch_rewards, batch_next_states, batch_done = self.replay_buffer.get_minibatch(self.batch_size)
          
         # random weights
         alphas = np.random.uniform(low=0, high=1, size=200)

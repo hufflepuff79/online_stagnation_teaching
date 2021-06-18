@@ -24,9 +24,9 @@ class ReplayBuffer():
     def get_minibatch(self, batch_size: int = 32):
         batch_state = torch.empty(batch_size, 4, 84, 84, dtype=torch.float32)
         batch_next_state = torch.empty(batch_size, 4, 84, 84, dtype=torch.float32)
-        batch_actions = torch.empty(batch_size, 1, dtype=torch.float32)
+        batch_actions = torch.empty(batch_size, 1, dtype=torch.long)
         batch_reward = torch.empty(batch_size, 1, dtype=torch.float32)
-        batch_done = torch.empty(batch_size, 1, dtype=torch.bool)
+        batch_done = torch.empty(batch_size, 1, dtype=torch.int)
         for index, rand_index in enumerate(np.random.choice(len(self.data['action']) - 5, size=batch_size, replace=False)):
             batch_state[index, :, :, :] = torch.from_numpy(self.data['observation'][rand_index: rand_index+4, :, :])
             batch_next_state[index, :, :, :] = torch.from_numpy(self.data['observation'][rand_index+1: rand_index+5, :, :])
