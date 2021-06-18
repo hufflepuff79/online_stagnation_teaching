@@ -22,9 +22,15 @@ class REM(nn.Module):
 
 
     def forward(self, x, alphas):
+        """
+        Forward pass of REM-Network
+
+        x: Input Batch
+        alphas: weights of random mixture
+        """
 
         if len(alphas) != self.num_heads:
-            raise ValueError("alphas need too be of same length as network heads")
+            raise ValueError("weights need too be of same length as network heads")
 
         x = self.conv1(x)
         x = self.relu(x)
