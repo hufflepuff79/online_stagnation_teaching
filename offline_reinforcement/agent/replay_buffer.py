@@ -30,9 +30,9 @@ class ReplayBuffer():
         for index, rand_index in enumerate(np.random.choice(len(self.data['action']) - 5, size=batch_size, replace=False)):
             batch_state[index, :, :, :] = torch.from_numpy(self.data['observation'][rand_index: rand_index+4, :, :])
             batch_next_state[index, :, :, :] = torch.from_numpy(self.data['observation'][rand_index+1: rand_index+5, :, :])
-            batch_actions[index, :] = self.data['action'][rand_index]
-            batch_reward[index, :] = torch.from_numpy(np.asarray(self.data['reward'][rand_index]))
-            batch_done[index, :] = self.data['terminal'][rand_index]
+            batch_actions[index, :] = self.data['action'][rand_index+4]
+            batch_reward[index, :] = torch.from_numpy(np.asarray(self.data['reward'][rand_index+4]))
+            batch_done[index, :] = self.data['terminal'][rand_index+4]
 
         return batch_state, batch_actions, batch_reward, batch_next_state, batch_done
 

@@ -22,15 +22,25 @@ def train(atari_game, data_dir, epochs, iterations):
     # initiate training
     print(f"\nStarting Training\nEpochs: {epochs}\nIterations per Epoch: {iterations}\n\n")
     for epoch in range(epochs):
-        for iteration in range(iterations):  #TODO: how many iterations per epoch?
+        
+        print(f"\nEpoch {epoch+1}/{epochs}:")
+        print("Iteration Progress:")
+
+        iter_block = iterations//30
+
+        for iteration in range(iterations):
+            
+            print("|"+"█"*(iteration//iter_block)+" "*(30 - iteration//iter_block)+"|", end="\r")
             agent.train_batch()
-        # TODO: when to update the Q target network
-        agent.update_target()
+            
+            if iteration % 2000 == 0:
+                agent.update_target()
 
-        # TODO: environment setup and online validation
+        # online validation
+        # TODO: instead of playing to terminal state, play for certain amount of steps?
         validation_reward = online_validation(agent=agent, env=env)
+        print(f"Average Reward: {validation_reward}\n")
 
-        print(f"\nEpoch {epoch+1}/{epochs}:\nAverage Reward: {validation_reward}\n")
 
         # TODO: track stats using tensorboard (needs to be added to Agent file)
 
@@ -61,11 +71,10 @@ def online_validation(agent, env, render=False):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Parser to Initiate Agent Training")
     parser.add_argument('--data_dir', type=str, help='location of training data')
-    parser.add_argument('--epochs', type=int, help='amount of epochs for training run', default=10)
-    parser.add_argument('--iter', type=int, help='amount of iterations per epoch', default=10)
+    parser.add_argument('--epochs', type=int, help='amount of epochs for training run', default=200)
+    # TODO Goal: View 1.000.000 frames per epoch. --> problem: one iter (1 or 4) frames?
+    parser.add_argument('--iter', type=int, help='amount of iterations per epoch', default=8000)
     parser.add_argument('--game', type=str, help='Atari game to train Agent on', default='Breakout')
-
-    # TODO: additional argument for how often validation is performed/Q_target update is performed?
     args = parser.parse_args()
 
     train(atari_game=args.game,
