@@ -6,7 +6,7 @@ from dopamine.discrete_domains import atari_lib as al
 
 import time
 
-def train(atari_game, data_dir, epochs):
+def train(atari_game, data_dir, epochs, iterations):
 
     # create Atari game environment
     env = al.create_atari_environment(atari_game)
@@ -20,15 +20,17 @@ def train(atari_game, data_dir, epochs):
     agent = REMAgent(Q_network, Q_target_network, num_actions, data_dir)
 
     # initiate training
+    print(f"\nStarting Training\nEpochs: {epochs}\nIterations per Epoch: {iterations}\n\n")
     for epoch in range(epochs):
-        for iteration in range(10):  #TODO: how many iterations per epoch?
+        for iteration in range(iterations):  #TODO: how many iterations per epoch?
             agent.train_batch()
         # TODO: when to update the Q target network
         agent.update_target()
 
         # TODO: environment setup and online validation
         validation_reward = online_validation(agent=agent, env=env)
-        print(validation_reward)
+
+        print(f"\nEpoch {epoch+1}/{epochs}:\nAverage Reward: {validation_reward}\n")
 
         # TODO: track stats using tensorboard (needs to be added to Agent file)
 
@@ -60,6 +62,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser("Parser to Initiate Agent Training")
     parser.add_argument('--data_dir', type=str, help='location of training data')
     parser.add_argument('--epochs', type=int, help='amount of epochs for training run', default=10)
+    parser.add_argument('--iter', type=int, help='amount of iterations per epoch', default=10)
     parser.add_argument('--game', type=str, help='Atari game to train Agent on', default='Breakout')
 
     # TODO: additional argument for how often validation is performed/Q_target update is performed?
@@ -67,4 +70,5 @@ if __name__ == "__main__":
 
     train(atari_game=args.game,
           data_dir=args.data_dir,
-          epochs=args.epochs)
+          epochs=args.epochs,
+          iterations=args.iter)
