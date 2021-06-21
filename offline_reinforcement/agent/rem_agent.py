@@ -7,6 +7,7 @@ import numpy as np
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+
 class REMAgent:
 
     def __init__(self, Q: nn.Module, Q_target: nn.Module, data_dir: str):
@@ -29,7 +30,6 @@ class REMAgent:
 
         # loss
         self.loss_function = torch.nn.SmoothL1Loss(beta=1.0)
-    
 
     def train_batch(self) -> None:
         
@@ -49,11 +49,9 @@ class REMAgent:
         loss.backward()
         self.optimizer.step()
 
-
     def update_target(self) -> None:
         self.Q_target.load_state_dict(self.Q.state_dict())
 
-    
     def act(self, state: torch.Tensor, deterministic: bool, distribution=None) -> int:
         
         r = np.random.uniform()
