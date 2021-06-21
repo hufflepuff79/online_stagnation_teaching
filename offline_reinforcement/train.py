@@ -1,9 +1,13 @@
 import argparse
 from agent.rem_agent import REMAgent
 from agent.networks import REM
+from dopamine.discrete_domains import atari_lib as al
 
 
-def train(data_dir, epochs):
+def train(atari_game, data_dir, epochs):
+
+    # create Atari game environment
+    env = al.create_atari_environment(atari_game)
 
     # create the Q network and Q target network
     Q_network = REM()  #TODO: what values to give for num_actions, num_heads
@@ -29,5 +33,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser("Parser to Initiate Agent Training")
     parser.add_argument('--data_dir', type=str, help='location of training data')
     parser.add_arguement('--epochs', type=int, help='amount of epochs for training run', default=100)
+    parser.add_argument('--game', type=str, help='Atari game to train Agent on', default='Pong-v0')
+
+    # TODO: additional argument for how often validation is performed/Q_target update is performed?
     args = parser.parse_args()
-    train(args.data_dir, args.epochs)
+
+    train(atari_game=args.game,
+          data_dir=args.data_dir,
+          epochs=args.epochs)
