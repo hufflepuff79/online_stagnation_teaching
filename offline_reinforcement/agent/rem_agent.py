@@ -10,15 +10,20 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class REMAgent:
 
-    def __init__(self, Q: nn.Module, Q_target: nn.Module, data_dir: str):
+    def __init__(self, Q: nn.Module, Q_target: nn.Module, num_actions : int, data_dir: str):
         
         # setup networks
         self.Q = Q.to(device)
         self.Q_target = Q_target.to(device)
         self.Q_target.load_state_dict(self.Q.state_dict())
 
+        self.num_actions = num_actions
+
         # replay buffer
         self.replay_buffer = ReplayBuffer(data_dir)
+
+        # state buffer
+        self.state_buffer = StateBuffer(size=4)
 
         # parameters
         self.batch_size = 32 
@@ -38,6 +43,7 @@ class REMAgent:
          
         # random weights
         alphas = np.random.uniform(low=0, high=1, size=200)
+        alphas = alphas/np.sum(alphas)
 
         # update 
         max_action_Qs, _ = torch.max(self.Q_target(batch_next_states, alphas), dim=1)
@@ -54,11 +60,35 @@ class REMAgent:
 
     def act(self, state: torch.Tensor, deterministic: bool, distribution=None) -> int:
         
+        self.state_buffer.update(state)
         r = np.random.uniform()
+        alphas = np.random.uniform(low=0, high=1, size=200)
+        alphas = alphas/np.sum(alphas)
 
         if deterministic or r > self.epsilon:
-            action_id = np.argmax(self.Q(state).detach().numpy())
+            action_id = np.argmax(self.Q(self.state_buffer.get_states(), alphas).detach().numpy())
         else:
             action_id = np.random.choice(a=self.num_actions, p=distribution)
 
         return action_id
+
+
+class StateBuffer:
+
+    def __init__(self, size: int=4, img_width: int=84, img_height: int=84):
+
+        self.size = size
+        self.states = torch.zeros(1, size, img_width, img_height, dtype=torch.float)
+
+    def update(self, new_state):
+
+        self.states = torch.roll(self.states, -1, 1)
+        self.states[:, -1, :, :] = new_state
+
+    def reset(self, new_state):
+
+        self.states = torch.cat((new_state,)*4, dim=1)
+
+    def get_states(self):
+
+        return self.states
