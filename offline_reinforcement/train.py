@@ -18,6 +18,7 @@ def train(atari_game, data_dir, epochs, iterations):
 
     # create the REM Agent
     agent = REMAgent(Q_network, Q_target_network, num_actions, data_dir)
+    agent.replay_buffer.load_new_buffer()
 
     # initiate training
     print(f"\nStarting Training\nEpochs: {epochs}\nIterations per Epoch: {iterations}\n\n")
@@ -35,6 +36,7 @@ def train(atari_game, data_dir, epochs, iterations):
             
             if iteration % 2000 == 0:
                 agent.update_target()
+                agent.replay_buffer.load_new_buffer()
 
         # online validation
         # TODO: instead of playing to terminal state, play for certain amount of steps?
