@@ -1,5 +1,6 @@
 import argparse
 import torch
+from utils import StatusPrinter
 from agent.rem_agent import REMAgent
 from agent.networks import REM
 from dopamine.discrete_domains import atari_lib as al
@@ -18,25 +19,31 @@ def train(atari_game, data_dir, epochs, iterations):
 
     # create the REM Agent
     agent = REMAgent(Q_network, Q_target_network, num_actions, data_dir)
-    agent.replay_buffer.load_new_buffer()
+    # agent.replay_buffer.load_new_buffer()
+
+    # for logging
+    sp = StatusPrinter()
+    sp.add_counter("epoch", "Epochs", epochs, 0)
+    sp.add_bar("iter", "Iteration Progress", iterations)
 
     # initiate training
     print(f"\nStarting Training\nEpochs: {epochs}\nIterations per Epoch: {iterations}\n\n")
     for epoch in range(epochs):
         
-        print(f"\nEpoch {epoch+1}/{epochs}:")
-        print("Iteration Progress:")
+        sp.increment_and_print("epoch")
+        sp.print_statement("iter")
+        sp.reset_element("iter")
 
         iter_block = iterations//30
 
         for iteration in range(iterations):
             
-            print("|"+"█"*(iteration//iter_block)+" "*(30 - iteration//iter_block)+"|", end="\r")
-            agent.train_batch()
+            sp.increment_and_print("iter")
+            loss_value = agent.train_batch()
             
             if iteration % 2000 == 0:
                 agent.update_target()
-                agent.replay_buffer.load_new_buffer()
+                #agent.replay_buffer.load_new_buffer()
 
         # online validation
         # TODO: instead of playing to terminal state, play for certain amount of steps?
