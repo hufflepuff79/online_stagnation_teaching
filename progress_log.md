@@ -45,6 +45,9 @@ After meeting TODOs:
 ##  Project Milestone 3 (13.07.2021)
 - [ ] Implementation of the other baselines
 
+## Project Experiments 
+- [ ] Checkpoint switching hyperparameter
+
 ## Submission Final Project (27.07.2021)
 
 ## Presentation (03.08.2021)
