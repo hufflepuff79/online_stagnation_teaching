@@ -15,7 +15,7 @@ class REM(nn.Module):
 
         self.lin1 = nn.Linear(in_features=3136, out_features=512)
         
-        self.heads = [nn.Linear(in_features=512, out_features=num_actions) for i in range(num_heads)]
+        self.heads = nn.ModuleList([nn.Linear(in_features=512, out_features=num_actions) for i in range(num_heads)])
 
         self.relu = nn.ReLU()
         self.flatten = nn.Flatten()
@@ -42,7 +42,7 @@ class REM(nn.Module):
         x = self.lin1(x)
         x = self.relu(x)
 
-        return sum([alp*lin(x) for lin, alp in zip(self.heads, alphas)])
+        return sum([alpha*lin(x) for lin, alpha in zip(self.heads, alphas)])
 
 
 
