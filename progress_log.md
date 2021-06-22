@@ -29,8 +29,8 @@ After meeting TODOs:
 ##  Project Milestone 1 (15.06.2021)
 - [x] Read and understand [An Optimistic Perspective on Offline Reinforcement Learning](https://arxiv.org/pdf/1907.04543.pdf)
 - [ ] Refresh RL knowledge with [RL Tutorial](https://github.com/andri27-ts/Reinforcement-Learning) and [Offline RL Tutorial Paper](https://arxiv.org/pdf/2005.01643.pdf#cite.kalashnikov2018qtopt)
-- [ ] Visualize the training pipeline
-- [ ] Gain Access to the AIS computers
+- [x] Visualize the training pipeline
+- [x] Gain Access to the AIS computers
 - [x] Share AIS template
 
 ##  Project Milestone 2 (29.06.2021)
