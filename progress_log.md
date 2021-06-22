@@ -23,7 +23,8 @@ Discussed in meeting:
 
 After meeting TODOs:
 - [ ] Send out update when rewards start looking promising
-- [ ] Checkpoint swithching hyperparameter experiment
+- [ ] Checkpoint switching hyperparameter experiment
+- [ ] Start looking at which baselines we would like to implement
 
 ##  Project Milestone 1 (15.06.2021)
 - [x] Read and understand [An Optimistic Perspective on Offline Reinforcement Learning](https://arxiv.org/pdf/1907.04543.pdf)
