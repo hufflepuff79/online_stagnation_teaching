@@ -27,7 +27,6 @@ class StatusPrinter:
             self.elements[name][1].increment()
             if (self.elements[name][1].value == 1 or
                 self.elements[name][1].value % bs == 0 or
-                self.elements[name][1].value == 0 or
                 self.elements[name][1].value == self.elements[name][1].max_value):
                 print("\u001b[?25l"+str(self.elements[name][1]), end="\r" if self.elements[name][1].value < self.elements[name][1].max_value  else "\u001b[?25h\n")
 
