@@ -67,7 +67,7 @@ class REMAgent:
         alphas = alphas/np.sum(alphas)
 
         if deterministic or r > self.epsilon:
-            action_id = np.argmax(self.Q(self.state_buffer.get_states(), alphas).detach().numpy())
+            action_id = np.argmax(self.Q(self.state_buffer.get_states(), alphas).cpu().detach().numpy())
         else:
             action_id = np.random.choice(a=self.num_actions, p=distribution)
 
@@ -79,16 +79,16 @@ class StateBuffer:
     def __init__(self, size: int=4, img_width: int=84, img_height: int=84):
 
         self.size = size
-        self.states = torch.zeros(1, size, img_width, img_height, dtype=torch.float)
+        self.states = torch.zeros(1, size, img_width, img_height, dtype=torch.float).to(device)
 
     def update(self, new_state):
 
-        self.states = torch.roll(self.states, -1, 1)
-        self.states[:, -1, :, :] = new_state
+        self.states = torch.roll(self.states, -1, 1).to(device)
+        self.states[:, -1, :, :] = new_state.to(device)
 
     def reset(self, new_state):
 
-        self.states = torch.cat((new_state,)*4, dim=1)
+        self.states = torch.cat((new_state,)*4, dim=1).to(device)
 
     def get_states(self):
 
