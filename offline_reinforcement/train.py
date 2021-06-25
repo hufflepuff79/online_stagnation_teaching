@@ -56,8 +56,9 @@ def train(atari_game, data_dir, epochs, iterations):
 
 def online_validation(agent, env, num_runs=5, render=False):
     total_reward = 0
-    step_count = 0
+    total_step_count = 0
     for _ in range(num_runs):
+        step_count = 0
         done = False
         state = env.reset()
         state = torch.from_numpy(state).float()
@@ -75,7 +76,9 @@ def online_validation(agent, env, num_runs=5, render=False):
             
             total_reward += reward
             step_count += 1
-        return total_reward / step_count
+            total_step_count += 1
+
+    return total_reward / total_step_count
 
 
 if __name__ == "__main__":
