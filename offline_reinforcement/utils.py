@@ -1,6 +1,7 @@
 from matplotlib.lines import Line2D
 import matplotlib.pyplot as plt
 import numpy as np
+import time
 
 class StatusPrinter:
 
@@ -23,12 +24,14 @@ class StatusPrinter:
             print(self.elements[name][0]+": {}/{}".format(self.elements[name][1].value, self.elements[name][1].max_value))
 
         elif self.elements[name][2] == "bar": 
-            bs = int(self.elements[name][1].block_size)
+            prev_b = self.elements[name][1].blocks
             self.elements[name][1].increment()
+            curr_b = self.elements[name][1].blocks
             if (self.elements[name][1].value == 1 or
-                self.elements[name][1].value % bs == 0 or
+                prev_b != curr_b or
                 self.elements[name][1].value == self.elements[name][1].max_value):
-                print("\u001b[?25l"+str(self.elements[name][1]), end="\r" if self.elements[name][1].value < self.elements[name][1].max_value  else "\u001b[?25h\n")
+                #print("\u001b[?25l"+str(self.elements[name][1]), end="\r" if self.elements[name][1].value < self.elements[name][1].max_value  else "\u001b[?25h\n")
+                print("  "+str(self.elements[name][1]), end="\r" if self.elements[name][1].value < self.elements[name][1].max_value  else "\n")
 
     def print_statement(self, name):
         
@@ -39,26 +42,26 @@ class StatusPrinter:
         self.elements[name][1].reset()
 
 
-
 class ProgressBar:
 
     def __init__(self, max_value: int, num_blocks: int, value: int=0):
 
         self.max_value = max_value
         self.num_blocks = num_blocks
-        self.value = value 
         self.block_size = max_value / num_blocks
+        self.value = value 
+        self.blocks = int(self.value / self.block_size)
 
     def increment(self):
         self.value += 1
+        self.blocks = int(self.value / self.block_size)
 
     def reset(self):
         self.value = 0
+        self.blocks = 0
 
     def __str__(self):
-
-
-        return "|"+"█"*int(self.value/self.block_size)+" "*(self.num_blocks - int(self.value/self.block_size))+"|"
+        return "|"+"█"*self.blocks+" "*(self.num_blocks - self.blocks)+"|"
 
  
 def plot_grad_flow(named_parameters):
