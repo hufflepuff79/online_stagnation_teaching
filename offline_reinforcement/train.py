@@ -54,27 +54,28 @@ def train(atari_game, data_dir, epochs, iterations):
         # TODO: track stats using tensorboard (needs to be added to Agent file)
 
 
-def online_validation(agent, env, render=False):
+def online_validation(agent, env, num_runs=5, render=False):
     total_reward = 0
     step_count = 0
-    done = False
-    state = env.reset()
-    state = torch.from_numpy(state).float()
-    state = torch.reshape(state, (1,1,state.shape[0], state.shape[1]))
-    agent.state_buffer.reset(state)
-
-    while not done or step_count < 150000:
-        action = agent.act(state, deterministic=False)
-        state, reward, done, _ = env.step(action)  #TODO: does the input have to be a tuple
+    for _ in range(num_runs):
+        done = False
+        state = env.reset()
         state = torch.from_numpy(state).float()
-        state = torch.reshape(state, (1,1, state.shape[0], state.shape[1]))
-        if render:
-            time.sleep(0.03)
-            env.render("human")
-        
-        total_reward += reward
-        step_count += 1
-    return total_reward / step_count
+        state = torch.reshape(state, (1,1,state.shape[0], state.shape[1]))
+        agent.state_buffer.reset(state)
+
+        while not done or step_count < 150000:
+            action = agent.act(state, deterministic=False)
+            state, reward, done, _ = env.step(action)  #TODO: does the input have to be a tuple
+            state = torch.from_numpy(state).float()
+            state = torch.reshape(state, (1,1, state.shape[0], state.shape[1]))
+            if render:
+                time.sleep(0.03)
+                env.render("human")
+            
+            total_reward += reward
+            step_count += 1
+        return total_reward / step_count
 
 
 if __name__ == "__main__":
