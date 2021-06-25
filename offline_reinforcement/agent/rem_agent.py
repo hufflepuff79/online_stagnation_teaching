@@ -63,8 +63,8 @@ class REMAgent:
         
         self.state_buffer.update(state)
         r = np.random.uniform()
-        alphas = np.random.uniform(low=0, high=1, size=200)
-        alphas = alphas/np.sum(alphas)
+
+        alphas = np.full(shape=200, fill_value=1/200)
 
         if deterministic or r > self.epsilon:
             action_id = np.argmax(self.Q(self.state_buffer.get_states(), alphas).cpu().detach().numpy())
