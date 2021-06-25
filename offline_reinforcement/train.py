@@ -63,7 +63,7 @@ def online_validation(agent, env, render=False):
     state = torch.reshape(state, (1,1,state.shape[0], state.shape[1]))
     agent.state_buffer.reset(state)
 
-    while not done:
+    while not done or step_count < 150000:
         action = agent.act(state, deterministic=False)
         state, reward, done, _ = env.step(action)  #TODO: does the input have to be a tuple
         state = torch.from_numpy(state).float()
