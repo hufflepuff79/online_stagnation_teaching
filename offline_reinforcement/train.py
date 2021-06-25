@@ -4,6 +4,7 @@ from utils import StatusPrinter
 from agent.rem_agent import REMAgent
 from agent.networks import REM
 from dopamine.discrete_domains import atari_lib as al
+import torch.nn as nn
 
 import time
 
@@ -14,8 +15,8 @@ def train(atari_game, data_dir, epochs, iterations):
     num_actions = env.action_space.n
 
     # create the Q network and Q target network
-    Q_network = REM(num_actions=num_actions)  #TODO: what values to give for num_actions, num_heads
-    Q_target_network = REM(num_actions=num_actions)  #TODO: what values to give for num_actions, num_heads
+    Q_network = nn.DataParallel(REM(num_actions=num_actions))  #TODO: what values to give for num_actions, num_heads
+    Q_target_network = nn.DataParallel(REM(num_actions=num_actions))  #TODO: what values to give for num_actions, num_heads
 
     # create the REM Agent
     agent = REMAgent(Q_network, Q_target_network, num_actions, data_dir)
@@ -65,7 +66,7 @@ def online_validation(agent, env, num_runs=5, render=False):
         state = torch.reshape(state, (1,1,state.shape[0], state.shape[1]))
         agent.state_buffer.reset(state)
 
-        while not done or step_count < 150000:
+        while not done and step_count < 150000:
             action = agent.act(state, deterministic=False)
             state, reward, done, _ = env.step(action)  #TODO: does the input have to be a tuple
             state = torch.from_numpy(state).float()
