@@ -10,11 +10,11 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class REMAgent:
 
-    def __init__(self, Q: nn.Module, Q_target: nn.Module, num_actions : int, data_dir: str):
+    def __init__(self, Q: nn.Module, Q_target: nn.Module, num_actions : int, data_dir: str, optimizer: torch.optim.Optimizer, batch_size: int=32, epsilon: int = 0.001, gamma: int=0.99):
         
         # setup networks
-        self.Q = Q.to(device)
-        self.Q_target = Q_target.to(device)
+        self.Q = Q
+        self.Q_target = Q_target
         self.Q_target.load_state_dict(self.Q.state_dict())
 
         self.num_actions = num_actions
@@ -26,12 +26,12 @@ class REMAgent:
         self.state_buffer = StateBuffer(size=4)
 
         # parameters
-        self.batch_size = 32 
-        self.epsilon = 0.001
-        self.gamma = 0.99
+        self.batch_size = batch_size
+        self.epsilon = epsilon
+        self.gamma = gamma
 
         # optimizer
-        self.optimizer = torch.optim.Adam(self.Q.parameters(), lr=0.00005, eps=0.0003125)
+        self.optimizer = optimizer
 
         # loss
         self.loss_function = torch.nn.SmoothL1Loss(beta=1.0)
@@ -42,7 +42,7 @@ class REMAgent:
         batch_states, batch_actions, batch_rewards, batch_next_states, batch_done = self.replay_buffer.get_minibatch(self.batch_size)
          
         # random weights
-        alphas = np.random.uniform(low=0, high=1, size=200)
+        alphas = np.random.uniform(low=0, high=1, size=self.Q.num_heads)
         alphas = alphas/np.sum(alphas)
 
         # update 
@@ -64,7 +64,7 @@ class REMAgent:
         self.state_buffer.update(state)
         r = np.random.uniform()
 
-        alphas = np.full(shape=200, fill_value=1/200)
+        alphas = np.full(shape=self.Q.num_heads, fill_value=1/self.Q.num_heads)
 
         if deterministic or r > self.epsilon:
             action_id = np.argmax(self.Q(self.state_buffer.get_states(), alphas).cpu().detach().numpy())
@@ -88,7 +88,7 @@ class StateBuffer:
 
     def reset(self, new_state):
 
-        self.states = torch.cat((new_state,)*4, dim=1).to(device)
+        self.states = torch.cat((new_state,)*self.size, dim=1).to(device)
 
     def get_states(self):
 

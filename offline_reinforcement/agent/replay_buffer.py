@@ -1,4 +1,6 @@
 from os import replace
+import os
+import subprocess
 import torch
 import numpy as np
 import gzip
@@ -47,7 +49,7 @@ class ReplayBuffer():
             filename = f'{self.buffer_path}{STORE_FILENAME_PREFIX}{elem}_ckpt.{suffix}.gz'
             with open(filename, 'rb') as f:
                 with gzip.GzipFile(fileobj=f) as infile:
-                    self.data[elem] = np.load(infile)
+                    self.data[elem] = np.load(infile) 
 
     def get_static_minibatch(self, batch_size: int = 32):
         batch_state = torch.empty(batch_size, 4, 84, 84, dtype=torch.float32)

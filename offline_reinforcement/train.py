@@ -8,19 +8,31 @@ import torch.nn as nn
 
 import time
 
-def train(atari_game, data_dir, epochs, iterations):
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+def train(atari_game, data_dir, epochs, iterations, iter_target_update=2000, iter_buffer_update=2000):
 
     # create Atari game environment
     env = al.create_atari_environment(atari_game)
     num_actions = env.action_space.n
 
     # create the Q network and Q target network
-    Q_network = nn.DataParallel(REM(num_actions=num_actions))  #TODO: what values to give for num_actions, num_heads
-    Q_target_network = nn.DataParallel(REM(num_actions=num_actions))  #TODO: what values to give for num_actions, num_heads
+    Q_network = REM(num_actions=num_actions)  #TODO: what values to give for num_actions, num_heads
+    Q_target_network = REM(num_actions=num_actions)  #TODO: what values to give for num_actions, num_heads
+    optimizer = torch.optim.Adam(Q_network.parameters(), lr=0.00005, eps=0.0003125)
+
+    # parallelism if multiple GPUs
+    #if torch.cuda.device_count() > 1:
+    #    Q_network = nn.DataParallel(Q_network)
+    #    Q_target_network = nn.DataParallel(Q_target_network)
+
+    # Network to GPU
+    Q_network = Q_network.to(device)
+    Q_target_network = Q_target_network.to(device)
 
     # create the REM Agent
-    agent = REMAgent(Q_network, Q_target_network, num_actions, data_dir)
-    # agent.replay_buffer.load_new_buffer()
+    agent = REMAgent(Q_network, Q_target_network, num_actions, data_dir, optimizer)
+    agent.replay_buffer.load_new_buffer()
 
     # for logging
     sp = StatusPrinter()
@@ -35,16 +47,16 @@ def train(atari_game, data_dir, epochs, iterations):
         sp.print_statement("iter")
         sp.reset_element("iter")
 
-        iter_block = iterations//30
-
         for iteration in range(iterations):
             
             sp.increment_and_print("iter")
             loss_value = agent.train_batch()
             
-            if iteration % 2000 == 0:
+            if iteration % iter_target_update == 0:
                 agent.update_target()
-                #agent.replay_buffer.load_new_buffer()
+            
+            if iteration % iter_buffer_update == 0:
+                agent.replay_buffer.load_new_buffer()
 
         # online validation
         # TODO: instead of playing to terminal state, play for certain amount of steps?
@@ -55,9 +67,10 @@ def train(atari_game, data_dir, epochs, iterations):
         # TODO: track stats using tensorboard (needs to be added to Agent file)
 
 
-def online_validation(agent, env, num_runs=5, render=False):
+def online_validation(agent, env, num_runs=5, max_step_count=150000, render=False):
     total_reward = 0
     total_step_count = 0
+
     for _ in range(num_runs):
         step_count = 0
         done = False
@@ -66,11 +79,11 @@ def online_validation(agent, env, num_runs=5, render=False):
         state = torch.reshape(state, (1,1,state.shape[0], state.shape[1]))
         agent.state_buffer.reset(state)
 
-        while not done and step_count < 150000:
+        while not done and step_count < max_step_count:
             action = agent.act(state, deterministic=False)
             state, reward, done, _ = env.step(action)  #TODO: does the input have to be a tuple
             state = torch.from_numpy(state).float()
-            state = torch.reshape(state, (1,1, state.shape[0], state.shape[1]))
+            state = torch.reshape(state, (1, 1, state.shape[0], state.shape[1]))
             if render:
                 time.sleep(0.03)
                 env.render("human")
