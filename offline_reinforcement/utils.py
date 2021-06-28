@@ -70,8 +70,8 @@ class Parameters:
         with open(path) as f:
             data = json.load(f)
         for key in data.keys():
-            setattr(self, key, data[key])
-
+            setattr(self, key, data[key][0])
+            setattr(self, key+"_help", data[key][1])
 
 
  
