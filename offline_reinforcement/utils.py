@@ -2,6 +2,7 @@ from matplotlib.lines import Line2D
 import matplotlib.pyplot as plt
 import numpy as np
 import time
+import json
 
 class StatusPrinter:
 
@@ -9,13 +10,13 @@ class StatusPrinter:
 
         self.elements = {}
 
-    def add_bar(self, name: str, statement: str, max_value: int, num_blocks: int=30, value: int=0):
+    def add_bar(self, name: str, statement: str, max_value: int, num_blocks: int=30, value: int=0, bold: bool=False):
 
-        self.elements[name] = (statement, ProgressBar(max_value, num_blocks, value), "bar")
+        self.elements[name] = ("\033[1;4m"*bold+statement+"\033[0m", ProgressBar(max_value, num_blocks, value), "bar")
 
-    def add_counter(self, name: str, statement: str, max_value: int, value: int=0):
+    def add_counter(self, name: str, statement: str, max_value: int, value: int=0, bold: bool=False):
 
-        self.elements[name] = (statement, ProgressBar(max_value, 1, value), "counter")
+        self.elements[name] = ("\033[1m"*bold+statement+"\033[0m", ProgressBar(max_value, 1, value), "counter")
 
     def increment_and_print(self, name):
 
@@ -30,7 +31,6 @@ class StatusPrinter:
             if (self.elements[name][1].value == 1 or
                 prev_b != curr_b or
                 self.elements[name][1].value == self.elements[name][1].max_value):
-                #print("\u001b[?25l"+str(self.elements[name][1]), end="\r" if self.elements[name][1].value < self.elements[name][1].max_value  else "\u001b[?25h\n")
                 print("  "+str(self.elements[name][1]), end="\r" if self.elements[name][1].value < self.elements[name][1].max_value  else "\n")
 
     def print_statement(self, name):
@@ -62,6 +62,17 @@ class ProgressBar:
 
     def __str__(self):
         return "|"+"█"*self.blocks+" "*(self.num_blocks - self.blocks)+"|"
+
+
+class Parameters:
+
+    def __init__(self, path):
+        with open(path) as f:
+            data = json.load(f)
+        for key in data.keys():
+            setattr(self, key, data[key])
+
+
 
  
 def plot_grad_flow(named_parameters):

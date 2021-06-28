@@ -10,7 +10,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class REMAgent:
 
-    def __init__(self, Q: nn.Module, Q_target: nn.Module, num_actions : int, data_dir: str, optimizer: torch.optim.Optimizer, batch_size: int=32, epsilon: int = 0.001, gamma: int=0.99):
+    def __init__(self, Q: nn.Module, Q_target: nn.Module, num_actions : int, data_dir: str, optimizer: torch.optim.Optimizer, batch_size: int=32, epsilon: int = 0.001, gamma: int=0.99, history: int=4):
         
         # setup networks
         self.Q = Q
@@ -23,7 +23,7 @@ class REMAgent:
         self.replay_buffer = ReplayBuffer(data_dir)
 
         # state buffer
-        self.state_buffer = StateBuffer(size=4)
+        self.state_buffer = StateBuffer(size=history)
 
         # parameters
         self.batch_size = batch_size

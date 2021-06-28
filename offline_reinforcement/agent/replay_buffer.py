@@ -21,8 +21,7 @@ class ReplayBuffer():
         suffix = 0
         for elem in ELEMS:
             filename = f'{self.buffer_path}{STORE_FILENAME_PREFIX}{elem}_ckpt.{suffix}.gz'
-            with open(filename, 'rb') as f:
-                with gzip.GzipFile(fileobj=f) as infile:
+            with gzip.open(filename, 'rb') as infile:
                     self.data[elem] = np.load(infile)
         
     def get_minibatch(self, batch_size: int = 32):
@@ -47,8 +46,7 @@ class ReplayBuffer():
             suffix = np.random.randint(low=0, high=50)
         for elem in ELEMS:
             filename = f'{self.buffer_path}{STORE_FILENAME_PREFIX}{elem}_ckpt.{suffix}.gz'
-            with open(filename, 'rb') as f:
-                with gzip.GzipFile(fileobj=f) as infile:
+            with gzip.open(filename, 'rb') as infile:
                     self.data[elem] = np.load(infile) 
 
     def get_static_minibatch(self, batch_size: int = 32):

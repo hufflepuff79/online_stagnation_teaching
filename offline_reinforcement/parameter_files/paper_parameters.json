@@ -1,0 +1,16 @@
+{
+	"game": "Breakout",
+	"data_dir": "data/Breakout/1/",
+	"epochs": 200,
+	"iterations": 8000,
+	"validation_runs": 5,
+	"iter_target_update": 2000,
+        "iter_buffer_update": 2000,
+        "adam_learning_rate": 0.00005,
+	"adam_epsilon": 0.0003125,
+        "model_num_heads": 200,
+	"agent_epsilon": 0.001,
+	"agent_gamma": 0.99,
+	"agent_history": 4,
+	"replay_batch_size": 32
+}
