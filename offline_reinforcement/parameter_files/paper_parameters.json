@@ -12,7 +12,7 @@
 	"agent_epsilon": [0.001, "Epsilon-greedy parameter for acting of the agent"],
 	"agent_gamma": [0.99, "Discount factor of the REM agent"],
 	"agent_history": [4, "Number of states which are stacked as a multi-channel image in one go into the REM"],
-	"agent_max_val_steps": [1500, "Maximum steps per evaluation run of agent, if not terminated before."],
+	"agent_max_val_steps": [150000, "Maximum steps per evaluation run of agent, if not terminated before."],
 	"replay_batch_size": [32, "Batch size for training the agent with the transition data"],
 	"env_sticky_actions": [true, "If sticky actions should be used in online validation"]
 }

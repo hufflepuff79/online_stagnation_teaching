@@ -91,6 +91,8 @@ def train(params):
         total_action_freq /= params.validation_runs
 
         writer.add_scalar('Validation/Avg_Reward', validation_reward, epoch)
+        for i, freq in enumerate(total_action_freq):
+            writer.add_scalar(f"ActionFrequency/A{i}", freq, epoch)
         print(f"Average Reward: {validation_reward}\n")
 
 
