@@ -25,7 +25,7 @@ def train(atari_game, data_dir, epochs, iterations,
           env_sticky_actions=True):
 
     # create Atari game environment
-    env = al.create_atari_environment(atari_game, stick_actions=env_sticky_actions)  # uses sticky actions as default
+    env = al.create_atari_environment(atari_game, sticky_actions=env_sticky_actions)  # uses sticky actions as default
     num_actions = env.action_space.n
 
     # create the Q network and Q target network
