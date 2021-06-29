@@ -8,7 +8,8 @@ To run our project locally you will need to install the following:
  - Dopamine (install via source: https://github.com/google/dopamine#install-via-source)
  - PyTorch
 
-# 
+# Starting a Training Run
+To start a training run of the REM Agent, execute the command `python train.py`.
 
 
 # Training Configurations
