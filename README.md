@@ -9,7 +9,9 @@ To run our project locally you will need to install the following:
  - PyTorch
 
 # Starting a Training Run
-To start a training run of the REM Agent, execute the command `python train.py`. Additionally it is possible to specify the optional arguments *data_dir*, *epochs*,*iteration*, *game*, and *cfg* via the command line (ex `python train --game Asterix`). You can use the `python train.py --help` to learn more about these arguments.
+To start a training run of the REM Agent, execute the command `python train.py`. 
+
+Additionally it is possible to specify the optional arguments *data_dir*, *epochs*,*iteration*, *game*, and *cfg* via the command line (ex `python train --game Asterix`). You can use the `python train.py --help` to learn more about these arguments. Additional configurations for training are defined and can be changed in the configuration files found in the [parameters files folder](offline_reinforcement/parameter_files/) (see section Training Configurations).
 
 
 # Training Configurations
