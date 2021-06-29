@@ -3,18 +3,26 @@ import argparse
 from matplotlib.pyplot import step
 import torch
 from utils import StatusPrinter, Parameters
+from torch.utils.tensorboard import SummaryWriter
 from agent.rem_agent import REMAgent
 from agent.networks import REM
 from dopamine.discrete_domains import atari_lib as al
 import torch.nn as nn
 import numpy as np
+from os.path import exists, join
+from os import makedirs
 
 import time
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-
 def train(params):
+
+    # create a summary writer for logging stats
+    log_dir = join("train_stats", str(int(time.time())))
+    if not exists(log_dir):
+        makedirs(log_dir)
+    writer = SummaryWriter(log_dir=log_dir)
 
     # create Atari game environment
     env = al.create_atari_environment(params.game, sticky_actions=params.env_sticky_actions)  # uses sticky actions as default
@@ -56,7 +64,7 @@ def train(params):
         for iteration in range(1, params.iterations + 1):
             
             sp.increment_and_print("iter")
-            loss_value = agent.train_batch()
+            train_loss = agent.train_batch()
             
             if iteration % params.iter_target_update == 0:
                 agent.update_target()
@@ -65,6 +73,8 @@ def train(params):
                 agent.replay_buffer.load_new_buffer()
 
         # online validation
+        # set network status to eval
+        agent.set_net_status(eval=True)
         # TODO: instead of playing to terminal state, play for certain amount of steps?
         sp.print_statement("valid")
         sp.reset_element("valid")
@@ -73,18 +83,15 @@ def train(params):
         total_action_freq = np.zeros(num_actions)
         for run in range(params.validation_runs):
             sp.increment_and_print("valid")
-            total_reward += online_validation(agent=agent, env=env, max_step_count=params.agent_max_val_steps, render=True)
-            # online_reward, action_freq = online_validation(agent=agent, env=env, max_step_count=150)
+            online_reward, action_freq = online_validation(agent=agent, env=env, max_step_count=params.agent_max_val_steps)
             total_reward += online_reward
             total_action_freq += action_freq
             
         validation_reward = total_reward/params.validation_runs
         total_action_freq /= params.validation_runs
-        print(total_action_freq)
+
+        writer.add_scalar('Validation/Avg_Reward', validation_reward, epoch)
         print(f"Average Reward: {validation_reward}\n")
-
-
-        # TODO: track stats using tensorboard (needs to be added to Agent file)
 
 
 def online_validation(agent, env, max_step_count, render=False):
@@ -124,7 +131,8 @@ if __name__ == "__main__":
     # TODO Goal: View 1.000.000 frames per epoch. --> problem: one iter (1 or 4) frames?
     parser.add_argument('--iterations', type=int, help='amount of iterations per epoch')
     parser.add_argument('--game', type=str, help='Atari game to train Agent on')
-    parser.add_argument('--cfg', type=str, help='path to json config file', default='parameter_files/paper_parameters.json')
+    parser.add_argument('--cfg', type=str, help='path to json config file',
+                        default='parameter_files/paper_parameters.json')
     args = parser.parse_args()
 
     params = Parameters(args.cfg)
@@ -140,4 +148,4 @@ if __name__ == "__main__":
 
     params.fix()
 
-    train(params) 
+    train(params)
