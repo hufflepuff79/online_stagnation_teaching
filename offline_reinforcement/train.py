@@ -21,10 +21,11 @@ def train(atari_game, data_dir, epochs, iterations,
           agent_epsilon=0.001, 
           agent_gamma=0.99,
           agent_history=4,
-          replay_batch_size=32):
+          replay_batch_size=32,
+          env_sticky_actions=True):
 
     # create Atari game environment
-    env = al.create_atari_environment(atari_game)
+    env = al.create_atari_environment(atari_game, stick_actions=env_sticky_actions)  # uses sticky actions as default
     num_actions = env.action_space.n
 
     # create the Q network and Q target network
@@ -138,7 +139,8 @@ if __name__ == "__main__":
               agent_epsilon=param.agent_epsilon,
               agent_gamma=param.agent_gamma,
               agent_history=param.agent_history,
-              replay_batch_size=param.replay_batch_size)
+              replay_batch_size=param.replay_batch_size,
+              env_sticky_actions=param.env_sticky_actions)
     
     else:
         train(atari_game=args.game,
