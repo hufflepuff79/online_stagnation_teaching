@@ -1,10 +1,13 @@
 import argparse
 import torch
 from utils import StatusPrinter, Parameters
+from torch.untils.tensorboard import SummaryWriter
 from agent.rem_agent import REMAgent
 from agent.networks import REM
 from dopamine.discrete_domains import atari_lib as al
 import torch.nn as nn
+from os.path import exists
+from os import mkdir
 
 import time
 
@@ -22,7 +25,10 @@ def train(atari_game, data_dir, epochs, iterations,
           agent_gamma=0.99,
           agent_history=4,
           replay_batch_size=32,
-          env_sticky_actions=True):
+          env_sticky_actions=True,
+          log_dir="Training_Stats/"):
+    # create Summary Writer to track training stats
+    writer = SummaryWriter(log_dir=log_dir)
 
     # create Atari game environment
     env = al.create_atari_environment(atari_game, sticky_actions=env_sticky_actions)  # uses sticky actions as default
@@ -63,7 +69,8 @@ def train(atari_game, data_dir, epochs, iterations,
         for iteration in range(iterations):
             
             sp.increment_and_print("iter")
-            loss_value = agent.train_batch()
+            train_loss = agent.train_batch()
+            writer.add_scalar('Loss/train/{}'.format(epoch), train_loss, iteration)
             
             if iteration % iter_target_update == 0:
                 agent.update_target()
@@ -84,6 +91,7 @@ def train(atari_game, data_dir, epochs, iterations,
             total_reward += online_validation(agent=agent, env=env)
             
         validation_reward = total_reward/validation_runs
+        writer.add_scalar('Validation/Avg_Reward', validation_reward, epoch)
         print(f"Average Reward: {validation_reward}\n")
 
 
@@ -124,10 +132,16 @@ if __name__ == "__main__":
     parser.add_argument('--iter', type=int, help='amount of iterations per epoch', default=8000)
     parser.add_argument('--game', type=str, help='Atari game to train Agent on', default='Breakout')
     parser.add_argument('--cfg', type=str, help='path to json config file', default=None)
+    parser.add_argument("--log_dir", type=str, help="directory where summary writer stats are saved")
     args = parser.parse_args()
 
     if args.cfg:
         param = Parameters(args.cfg)
+
+        # create the logging dir
+        if param.log_dir and not exists(param.log_dir):
+            mkdir(param.log_dir)
+
         train(atari_game=param.game,
               data_dir=param.data_dir,
               epochs=param.epochs,
@@ -142,7 +156,8 @@ if __name__ == "__main__":
               agent_gamma=param.agent_gamma,
               agent_history=param.agent_history,
               replay_batch_size=param.replay_batch_size,
-              env_sticky_actions=param.env_sticky_actions)
+              env_sticky_actions=param.env_sticky_actions,
+              log_dir=param.log_dir)
     
     else:
         train(atari_game=args.game,
