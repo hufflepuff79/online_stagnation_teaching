@@ -15,4 +15,4 @@ Additionally it is possible to specify the optional arguments *data_dir*, *epoch
 
 
 # Training Configurations
-The default training configurations based on the "An Optimistic Perspective on Offline Reinforcement Learning" by Agarwal et al. can be found in [parameters files folder](offline_reinforcement/parameter_files/). Please insure that if using multiple GPUs for training, the *replay_batch_size* parameter is divisible by the number of GPUs in use. 
+The default training configurations based on the "*An Optimistic Perspective on Offline Reinforcement Learning*" by Agarwal et al. can be found in [parameters files folder](offline_reinforcement/parameter_files/). Please insure that if using multiple GPUs for training, the *replay_batch_size* parameter is divisible by the number of GPUs in use. 
