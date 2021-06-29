@@ -42,7 +42,7 @@ class REM(nn.Module):
         x = self.lin1(x)
         x = self.relu(x)
 
-        return sum([alpha*lin(x) for lin, alpha in zip(self.heads, alphas)])
+        return sum(alpha*lin(x) for lin, alpha in zip(self.heads, alphas))
 
 
 

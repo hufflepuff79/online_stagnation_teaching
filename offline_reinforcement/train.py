@@ -80,7 +80,7 @@ def train(params):
         # TODO: track stats using tensorboard (needs to be added to Agent file)
 
 
-def online_validation(agent, env, max_step_count=1500, render=False):
+def online_validation(agent, env, max_step_count, render=False):
 
     step_count = 0
     total_reward = 0
@@ -111,7 +111,7 @@ if __name__ == "__main__":
     parser.add_argument('--data_dir', type=str, help='location of training data')
     parser.add_argument('--epochs', type=int, help='amount of epochs for training run')
     # TODO Goal: View 1.000.000 frames per epoch. --> problem: one iter (1 or 4) frames?
-    parser.add_argument('--iter', type=int, help='amount of iterations per epoch')
+    parser.add_argument('--iterations', type=int, help='amount of iterations per epoch')
     parser.add_argument('--game', type=str, help='Atari game to train Agent on')
     parser.add_argument('--cfg', type=str, help='path to json config file', default='parameter_files/paper_parameters.json')
     args = parser.parse_args()
@@ -122,8 +122,8 @@ if __name__ == "__main__":
         params.data_dir = args.data_dir
     if args.epochs:
         params.epochs = args.epochs
-    if args.iter:
-        params.iterations = args.iter
+    if args.iterations:
+        params.iterations = args.iterations
     if args.game:
         params.game = args.game
 

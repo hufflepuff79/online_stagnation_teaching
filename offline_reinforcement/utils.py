@@ -85,7 +85,7 @@ class Parameters:
             data = json.load(f)
         for key in data.keys():
             setattr(self, key, data[key][0])
-            self.help[key] ==  data_key[1])
+            self.help[key] = data[key][1]
 
     def __setattr__(self, name, value):
 
