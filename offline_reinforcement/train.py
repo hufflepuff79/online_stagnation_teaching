@@ -1,13 +1,13 @@
 import argparse
 import torch
 from utils import StatusPrinter, Parameters
-from torch.untils.tensorboard import SummaryWriter
+from torch.utils.tensorboard import SummaryWriter
 from agent.rem_agent import REMAgent
 from agent.networks import REM
 from dopamine.discrete_domains import atari_lib as al
 import torch.nn as nn
 from os.path import exists, join
-from os import mkdir
+from os import makedirs
 
 import time
 
@@ -16,9 +16,9 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 def train(params):
 
     # create a summary writer for logging stats
-    log_dir = join("Train_Stats", str(int(time.time())))
+    log_dir = join("train_stats", str(int(time.time())))
     if not exists(log_dir):
-        mkdir(log_dir)
+        makedirs(log_dir)
     writer = SummaryWriter(log_dir=log_dir)
 
     # create Atari game environment
