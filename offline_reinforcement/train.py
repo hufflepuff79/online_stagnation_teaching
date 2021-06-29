@@ -72,6 +72,8 @@ def train(atari_game, data_dir, epochs, iterations,
                 agent.replay_buffer.load_new_buffer()
 
         # online validation
+        # set network status to eval
+        agent.set_net_status(eval=True)
         # TODO: instead of playing to terminal state, play for certain amount of steps?
         total_reward = 0
        
