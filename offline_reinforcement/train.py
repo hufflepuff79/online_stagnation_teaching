@@ -64,6 +64,8 @@ def train(params):
                 agent.replay_buffer.load_new_buffer()
 
         # online validation
+        # set network status to eval
+        agent.set_net_status(eval=True)
         # TODO: instead of playing to terminal state, play for certain amount of steps?
         sp.print_statement("valid")
         sp.reset_element("valid")

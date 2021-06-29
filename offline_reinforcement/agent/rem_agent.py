@@ -37,10 +37,12 @@ class REMAgent:
         self.loss_function = torch.nn.SmoothL1Loss(beta=1.0)
 
     def train_batch(self) -> None:
+
+        # set network to train mode
+        self.set_net_status(eval=False)
         
         # sample replay buffer
         batch_states, batch_actions, batch_rewards, batch_next_states, batch_done = self.replay_buffer.get_minibatch(self.batch_size)
-         
         # random weights
         alphas = np.random.uniform(low=0, high=1, size=self.Q.num_heads)
         alphas = alphas/np.sum(alphas)
@@ -55,6 +57,15 @@ class REMAgent:
         loss = self.loss_function(Q_pred, td_targets)
         loss.backward()
         self.optimizer.step()
+
+    def set_net_status(self, eval=True):
+        """" Status of the networks set to train/eval"""
+        if eval:
+            self.Q.eval()
+            self.Q_target.eval()
+        else:
+            self.Q.train()
+            self.Q_target.train()
 
     def update_target(self) -> None:
         self.Q_target.load_state_dict(self.Q.state_dict())
