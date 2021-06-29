@@ -5,7 +5,7 @@ In this project we aim to implement the Offline Reinforcement Learning approach 
 
 # Local Setup
 To run our project locally you will need to install the following:
- - Dopamine (install via source: https://github.com/google/dopamine#install-via-source)
+ - Dopamine (install via source [directions](https://github.com/google/dopamine#install-via-source))
  - PyTorch
 
 # Starting a Training Run
