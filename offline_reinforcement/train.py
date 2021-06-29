@@ -10,6 +10,7 @@ import time
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+
 def train(atari_game, data_dir, epochs, iterations,
           validation_runs=5,
           iter_target_update=2000,
@@ -119,11 +120,11 @@ if __name__ == "__main__":
     # TODO Goal: View 1.000.000 frames per epoch. --> problem: one iter (1 or 4) frames?
     parser.add_argument('--iter', type=int, help='amount of iterations per epoch', default=8000)
     parser.add_argument('--game', type=str, help='Atari game to train Agent on', default='Breakout')
-    parser.add_argument('--json', type=str, help='path to json config file', default=None)
+    parser.add_argument('--cfg', type=str, help='path to json config file', default=None)
     args = parser.parse_args()
 
-    if args.json != None:
-        param = Parameters(args.json)
+    if args.cfg:
+        param = Parameters(args.cfg)
         train(atari_game=param.game,
               data_dir=param.data_dir,
               epochs=param.epochs,
