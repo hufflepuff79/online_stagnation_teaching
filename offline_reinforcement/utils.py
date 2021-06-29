@@ -67,12 +67,33 @@ class ProgressBar:
 
 class Parameters:
 
-    def __init__(self, path):
+    def __init__(self, path=None):
+        
+        self.fixed = False
+
+        if path:
+            self.load_from_file(path)
+
+    def fix(self):
+        
+        self.fixed = True
+
+    def load_from_file(self, path):
+        
         with open(path) as f:
             data = json.load(f)
         for key in data.keys():
             setattr(self, key, data[key][0])
             setattr(self, key+"_help", data[key][1])
+
+    def __setattr__(self, name, value):
+
+        if name != 'fixed' and self.fixed and name in self.__dict__:
+            raise TypeError("Parameters are already fixed. Not allowed to change them.")
+
+        else:
+            self.__dict__[name] = value
+
 
 
 def plot_grad_flow(named_parameters):

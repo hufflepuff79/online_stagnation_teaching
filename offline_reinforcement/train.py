@@ -11,27 +11,16 @@ import time
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def train(atari_game, data_dir, epochs, iterations,
-          validation_runs=5,
-          iter_target_update=2000,
-          iter_buffer_update=2000,
-          adam_learning_rate=0.00005, 
-          adam_epsilon=0.0003125,
-          model_num_heads=200,
-          agent_epsilon=0.001, 
-          agent_gamma=0.99,
-          agent_history=4,
-          replay_batch_size=32,
-          env_sticky_actions=True):
+def train(params):
 
     # create Atari game environment
-    env = al.create_atari_environment(atari_game, sticky_actions=env_sticky_actions)  # uses sticky actions as default
+    env = al.create_atari_environment(params.game, sticky_actions=params.env_sticky_actions)  # uses sticky actions as default
     num_actions = env.action_space.n
 
     # create the Q network and Q target network
-    Q_network = REM(num_actions=num_actions, num_heads=model_num_heads)  #TODO: what values to give for num_actions, num_heads
-    Q_target_network = REM(num_actions=num_actions, num_heads=model_num_heads)  #TODO: what values to give for num_actions, num_heads
-    optimizer = torch.optim.Adam(Q_network.parameters(), lr=adam_learning_rate, eps=adam_epsilon)
+    Q_network = REM(num_actions=num_actions, num_heads=params.model_num_heads)  #TODO: what values to give for num_actions, num_heads
+    Q_target_network = REM(num_actions=num_actions, num_heads=params.model_num_heads)  #TODO: what values to give for num_actions, num_heads
+    optimizer = torch.optim.Adam(Q_network.parameters(), lr=params.adam_learning_rate, eps=params.adam_epsilon)
 
     # parallelism if multiple GPUs
     #if torch.cuda.device_count() > 1:
@@ -43,45 +32,48 @@ def train(atari_game, data_dir, epochs, iterations,
     Q_target_network = Q_target_network.to(device)
 
     # create the REM Agent
-    agent = REMAgent(Q_network, Q_target_network, num_actions, data_dir, optimizer=optimizer, batch_size=replay_batch_size, epsilon=agent_epsilon, gamma=agent_gamma, history=agent_history)
+    agent = REMAgent(Q_network, Q_target_network, num_actions, params.data_dir,
+                     optimizer=optimizer, batch_size=params.replay_batch_size,
+                     epsilon=params.agent_epsilon, gamma=params.agent_gamma, history=params.agent_history)
+
     agent.replay_buffer.load_new_buffer()
 
     # for logging
     sp = StatusPrinter()
-    sp.add_counter("epoch", "Epochs", epochs, 0, bold=True)
-    sp.add_bar("iter", "Iteration Progress", iterations)
-    sp.add_bar("valid", "Validation Progress", validation_runs)
+    sp.add_counter("epoch", "Epochs", params.epochs, 0, bold=True)
+    sp.add_bar("iter", "Iteration Progress", params.iterations)
+    sp.add_bar("valid", "Validation Progress", params.validation_runs)
 
     # initiate training
-    print(f"\nStarting Training\nEpochs: {epochs}\nIterations per Epoch: {iterations}\n\n")
-    for epoch in range(epochs):
+    print(f"\nStarting Training\nEpochs: {params.epochs}\nIterations per Epoch: {params.iterations}\n\n")
+    for epoch in range(params.epochs):
         
         sp.increment_and_print("epoch")
         sp.print_statement("iter")
         sp.reset_element("iter")
 
-        for iteration in range(iterations):
+        for iteration in range(params.iterations):
             
             sp.increment_and_print("iter")
             loss_value = agent.train_batch()
             
-            if iteration % iter_target_update == 0:
+            if iteration % params.iter_target_update == 0:
                 agent.update_target()
             
-            if iteration % iter_buffer_update == 0:
+            if iteration % params.iter_buffer_update == 0:
                 agent.replay_buffer.load_new_buffer()
 
         # online validation
         # TODO: instead of playing to terminal state, play for certain amount of steps?
-        total_reward = 0
-       
         sp.print_statement("valid")
         sp.reset_element("valid")
-        for run in range(validation_runs):
+
+        total_reward = 0
+        for run in range(params.validation_runs):
             sp.increment_and_print("valid")
-            total_reward += online_validation(agent=agent, env=env)
+            total_reward += online_validation(agent=agent, env=env, max_step_count=params.agent_max_val_steps)
             
-        validation_reward = total_reward/validation_runs
+        validation_reward = total_reward/params.validation_runs
         print(f"Average Reward: {validation_reward}\n")
 
 
@@ -117,33 +109,24 @@ def online_validation(agent, env, max_step_count=1500, render=False):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Parser to Initiate Agent Training")
     parser.add_argument('--data_dir', type=str, help='location of training data')
-    parser.add_argument('--epochs', type=int, help='amount of epochs for training run', default=200)
+    parser.add_argument('--epochs', type=int, help='amount of epochs for training run')
     # TODO Goal: View 1.000.000 frames per epoch. --> problem: one iter (1 or 4) frames?
-    parser.add_argument('--iter', type=int, help='amount of iterations per epoch', default=8000)
-    parser.add_argument('--game', type=str, help='Atari game to train Agent on', default='Breakout')
-    parser.add_argument('--cfg', type=str, help='path to json config file', default=None)
+    parser.add_argument('--iter', type=int, help='amount of iterations per epoch')
+    parser.add_argument('--game', type=str, help='Atari game to train Agent on')
+    parser.add_argument('--cfg', type=str, help='path to json config file', default='parameter_files/paper_parameters.json')
     args = parser.parse_args()
 
-    if args.cfg:
-        param = Parameters(args.cfg)
-        train(atari_game=param.game,
-              data_dir=param.data_dir,
-              epochs=param.epochs,
-              iterations=param.iterations,
-              validation_runs=param.validation_runs,
-              iter_target_update=param.iter_target_update,
-              iter_buffer_update=param.iter_buffer_update,
-              adam_learning_rate=param.adam_learning_rate,
-              adam_epsilon=param.adam_epsilon,
-              model_num_heads=param.model_num_heads,
-              agent_epsilon=param.agent_epsilon,
-              agent_gamma=param.agent_gamma,
-              agent_history=param.agent_history,
-              replay_batch_size=param.replay_batch_size,
-              env_sticky_actions=param.env_sticky_actions)
-    
-    else:
-        train(atari_game=args.game,
-              data_dir=args.data_dir,
-              epochs=args.epochs,
-              iterations=args.iter)
+    params = Parameters(args.cfg)
+
+    if args.data_dir:
+        params.data_dir = args.data_dir
+    if args.epochs:
+        params.epochs = args.epochs
+    if args.iter:
+        params.iterations = args.iter
+    if args.game:
+        params.game = args.game
+
+    params.fix()
+
+    train(params) 
