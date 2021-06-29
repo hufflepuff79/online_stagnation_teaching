@@ -70,6 +70,7 @@ class Parameters:
     def __init__(self, path=None):
         
         self.fixed = False
+        self.help = {}
 
         if path:
             self.load_from_file(path)
@@ -84,7 +85,7 @@ class Parameters:
             data = json.load(f)
         for key in data.keys():
             setattr(self, key, data[key][0])
-            setattr(self, key+"_help", data[key][1])
+            self.help[key] ==  data_key[1])
 
     def __setattr__(self, name, value):
 
