@@ -4,6 +4,7 @@ import torch.nn as nn
 from agent.networks import REM
 from agent.replay_buffer import ReplayBuffer
 import numpy as np
+import matplotlib.pyplot as plt
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -40,7 +41,13 @@ class REMAgent:
         
         # sample replay buffer
         batch_states, batch_actions, batch_rewards, batch_next_states, batch_done = self.replay_buffer.get_minibatch(self.batch_size)
-         
+
+        # fig, axs = plt.subplots(2, 2)
+        # axs = axs.flatten()
+        # for i in range(len(axs)):
+        #     axs[i].imshow(batch_states[0, i, :, :], cmap='gray')
+        # plt.show()
+
         # random weights
         alphas = np.random.uniform(low=0, high=1, size=self.Q.num_heads)
         alphas = alphas/np.sum(alphas)
@@ -63,6 +70,12 @@ class REMAgent:
         
         self.state_buffer.update(state)
         r = np.random.uniform()
+        
+        # fig, axs = plt.subplots(2, 2)
+        # axs = axs.flatten()
+        # for i in range(len(axs)):
+        #     axs[i].imshow(self.state_buffer.states[0, i, :, :], cmap='gray')
+        # plt.show()
 
         alphas = np.full(shape=self.Q.num_heads, fill_value=1/self.Q.num_heads)
 
@@ -70,7 +83,7 @@ class REMAgent:
             action_id = np.argmax(self.Q(self.state_buffer.get_states(), alphas).cpu().detach().numpy())
         else:
             action_id = np.random.choice(a=self.num_actions, p=distribution)
-
+        
         return action_id
 
 
@@ -79,6 +92,8 @@ class StateBuffer:
     def __init__(self, size: int=4, img_width: int=84, img_height: int=84):
 
         self.size = size
+        self.img_width = img_width
+        self.img_height = img_height
         self.states = torch.zeros(1, size, img_width, img_height, dtype=torch.float).to(device)
 
     def update(self, new_state):
@@ -88,7 +103,8 @@ class StateBuffer:
 
     def reset(self, new_state):
 
-        self.states = torch.cat((new_state,)*self.size, dim=1).to(device)
+        self.states = torch.zeros(1, self.size, self.img_width, self.img_height, dtype=torch.float).to(device)
+        self.states[:, -1, :, :] = new_state
 
     def get_states(self):
 

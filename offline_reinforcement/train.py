@@ -1,10 +1,13 @@
 import argparse
+
+from matplotlib.pyplot import step
 import torch
 from utils import StatusPrinter, Parameters
 from agent.rem_agent import REMAgent
 from agent.networks import REM
 from dopamine.discrete_domains import atari_lib as al
 import torch.nn as nn
+import numpy as np
 
 import time
 
@@ -36,8 +39,6 @@ def train(params):
                      optimizer=optimizer, batch_size=params.replay_batch_size,
                      epsilon=params.agent_epsilon, gamma=params.agent_gamma, history=params.agent_history)
 
-    agent.replay_buffer.load_new_buffer()
-
     # for logging
     sp = StatusPrinter()
     sp.add_counter("epoch", "Epochs", params.epochs, 0, bold=True)
@@ -52,7 +53,7 @@ def train(params):
         sp.print_statement("iter")
         sp.reset_element("iter")
 
-        for iteration in range(params.iterations):
+        for iteration in range(1, params.iterations + 1):
             
             sp.increment_and_print("iter")
             loss_value = agent.train_batch()
@@ -69,11 +70,17 @@ def train(params):
         sp.reset_element("valid")
 
         total_reward = 0
+        total_action_freq = np.zeros(num_actions)
         for run in range(params.validation_runs):
             sp.increment_and_print("valid")
-            total_reward += online_validation(agent=agent, env=env, max_step_count=params.agent_max_val_steps)
+            total_reward += online_validation(agent=agent, env=env, max_step_count=params.agent_max_val_steps, render=True)
+            # online_reward, action_freq = online_validation(agent=agent, env=env, max_step_count=150)
+            total_reward += online_reward
+            total_action_freq += action_freq
             
         validation_reward = total_reward/params.validation_runs
+        total_action_freq /= params.validation_runs
+        print(total_action_freq)
         print(f"Average Reward: {validation_reward}\n")
 
 
@@ -91,11 +98,14 @@ def online_validation(agent, env, max_step_count, render=False):
     state = torch.reshape(state, (1,1,state.shape[0], state.shape[1]))
     agent.state_buffer.reset(state)
 
+    freq_actions = np.zeros(env.action_space.n)
+
     while not done and step_count < max_step_count:
         action = agent.act(state, deterministic=False)
         state, reward, done, _ = env.step(action)  #TODO: does the input have to be a tuple
         state = torch.from_numpy(state).float()
         state = torch.reshape(state, (1, 1, state.shape[0], state.shape[1]))
+        freq_actions[action] += 1
         if render:
             time.sleep(0.03)
             env.render("human")
@@ -103,7 +113,8 @@ def online_validation(agent, env, max_step_count, render=False):
         total_reward += reward
         step_count += 1
 
-    return total_reward / step_count
+    freq_actions /= step_count
+    return total_reward, freq_actions
 
 
 if __name__ == "__main__":
