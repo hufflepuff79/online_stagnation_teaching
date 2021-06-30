@@ -40,7 +40,7 @@ class ReplayBuffer():
     def load_new_buffer(self, suffix: int = None):
         del self.data
         self.data = {}
-        if suffix:
+        if not suffix:
             suffix = np.random.randint(low=0, high=50)
         for elem in ELEMS:
             filename = f'{self.buffer_path}{STORE_FILENAME_PREFIX}{elem}_ckpt.{suffix}.gz'
