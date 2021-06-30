@@ -11,8 +11,10 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class REMAgent:
 
-    def __init__(self, Q: nn.Module, Q_target: nn.Module, num_actions : int, data_dir: str, optimizer: torch.optim.Optimizer, batch_size: int=32, epsilon: int = 0.001, gamma: int=0.99, history: int=4):
-        
+    def __init__(self, Q: nn.Module, Q_target: nn.Module, num_actions: int, data_dir: str,
+                 optimizer: torch.optim.Optimizer, batch_size: int = 32,
+                 epsilon: int = 0.001, gamma: int = 0.99, history: int = 4):
+
         # setup networks
         self.Q = Q
         self.Q_target = Q_target
@@ -41,7 +43,7 @@ class REMAgent:
 
         # set network to train mode
         self.set_net_status(eval=False)
-        
+
         # sample replay buffer
         batch_states, batch_actions, batch_rewards, batch_next_states, batch_done = self.replay_buffer.get_minibatch(self.batch_size)
 
@@ -55,7 +57,7 @@ class REMAgent:
         alphas = np.random.uniform(low=0, high=1, size=self.Q.num_heads)
         alphas = alphas/np.sum(alphas)
 
-        # update 
+        # update
         with torch.no_grad():
             max_action_Qs, _ = torch.max(self.Q_target(batch_next_states, alphas), dim=1)
             td_targets = batch_rewards + self.gamma * max_action_Qs * (1.0-batch_done)
@@ -80,10 +82,10 @@ class REMAgent:
         self.Q_target.load_state_dict(self.Q.state_dict())
 
     def act(self, state: torch.Tensor, deterministic: bool, distribution=None) -> int:
-        
+
         self.state_buffer.update(state)
         r = np.random.uniform()
-        
+
         # fig, axs = plt.subplots(2, 2)
         # axs = axs.flatten()
         # for i in range(len(axs)):
@@ -96,13 +98,13 @@ class REMAgent:
             action_id = np.argmax(self.Q(self.state_buffer.get_states(), alphas).cpu().detach().numpy())
         else:
             action_id = np.random.choice(a=self.num_actions, p=distribution)
-        
+
         return action_id
 
 
 class StateBuffer:
 
-    def __init__(self, size: int=4, img_width: int=84, img_height: int=84):
+    def __init__(self, size: int = 4, img_width: int = 84, img_height: int = 84):
 
         self.size = size
         self.img_width = img_width
