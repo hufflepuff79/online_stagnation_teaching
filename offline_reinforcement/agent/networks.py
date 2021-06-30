@@ -4,12 +4,12 @@ import torch.nn.functional as F
 
 class REM(nn.Module):
 
-    def __init__(self, num_actions: int = 18, num_heads: int = 200):
+    def __init__(self, num_actions: int = 18, num_heads: int = 200, agent_history: int = 4):
         super(REM, self).__init__()
 
         self.num_heads = num_heads
 
-        self.conv1 = nn.Conv2d(in_channels=4, out_channels=32, kernel_size=8, stride=4)
+        self.conv1 = nn.Conv2d(in_channels=agent_history, out_channels=32, kernel_size=8, stride=4)
         self.conv2 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2)
         self.conv3 = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1)
 

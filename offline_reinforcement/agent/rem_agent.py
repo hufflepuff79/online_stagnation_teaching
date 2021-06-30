@@ -21,7 +21,7 @@ class REMAgent:
         self.num_actions = num_actions
 
         # replay buffer
-        self.replay_buffer = ReplayBuffer(data_dir)
+        self.replay_buffer = ReplayBuffer(data_dir, history=history)
 
         # state buffer
         self.state_buffer = StateBuffer(size=history)
