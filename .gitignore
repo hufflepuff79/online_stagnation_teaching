@@ -95,7 +95,7 @@ ipython_config.py
 __pypackages__/
 
 # training stats directors
-training_stats/*
+train_stats/
 
 # Celery stuff
 celerybeat-schedule
