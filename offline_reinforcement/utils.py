@@ -67,10 +67,12 @@ class ProgressBar:
 
 class Parameters:
 
-    def __init__(self, path=None):
+    def __init__(self, path=None, is_help=False):
         
         self.fixed = False
-        self.help = {}
+
+        if not is_help:
+            self.help = Parameters(is_help=True)
 
         if path:
             self.load_from_file(path)
@@ -78,6 +80,7 @@ class Parameters:
     def fix(self):
         
         self.fixed = True
+        self.help.fixed = True
 
     def load_from_file(self, path):
         
@@ -85,7 +88,7 @@ class Parameters:
             data = json.load(f)
         for key in data.keys():
             setattr(self, key, data[key][0])
-            self.help[key] = data[key][1]
+            setattr(self.help, key, data[key][1])
 
     def __setattr__(self, name, value):
 

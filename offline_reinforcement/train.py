@@ -29,8 +29,8 @@ def train(params):
     num_actions = env.action_space.n
 
     # create the Q network and Q target network
-    Q_network = REM(num_actions=num_actions, num_heads=params.model_num_heads)  #TODO: what values to give for num_actions, num_heads
-    Q_target_network = REM(num_actions=num_actions, num_heads=params.model_num_heads)  #TODO: what values to give for num_actions, num_heads
+    Q_network = REM(num_actions=num_actions, num_heads=params.model_num_heads, agent_history=params.agent_history)  #TODO: what values to give for num_actions, num_heads
+    Q_target_network = REM(num_actions=num_actions, num_heads=params.model_num_heads, agent_history=params.agent_history)  #TODO: what values to give for num_actions, num_heads
     optimizer = torch.optim.Adam(Q_network.parameters(), lr=params.adam_learning_rate, eps=params.adam_epsilon)
 
     # parallelism if multiple GPUs
