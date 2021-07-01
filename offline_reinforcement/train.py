@@ -66,10 +66,12 @@ def train(params):
         sp.print_statement("iter")
         sp.reset_element("iter")
 
+        train_loss = 0
+
         for iteration in range(1, params.iterations + 1):
 
             sp.increment_and_print("iter")
-            train_loss = agent.train_batch()
+            train_loss += agent.train_batch()
 
             if iteration % params.iter_target_update == 0:
                 agent.update_target()
@@ -77,8 +79,12 @@ def train(params):
             if iteration % params.iter_buffer_update == 0:
                 agent.replay_buffer.load_new_buffer()
 
+        train_loss /= params.iterations
+       
+        writer.add_scalar('Training/Avg_Loss', train_loss, epoch)
+        print(f"Average Training Loss: {train_loss}")
+
         # online validation
-        # set network status to eval
         agent.set_net_status(eval=True)
         # TODO: instead of playing to terminal state, play for certain amount of steps?
         sp.print_statement("valid")
@@ -96,9 +102,10 @@ def train(params):
         validation_reward = total_reward/params.validation_runs
         total_action_freq /= params.validation_runs
 
-        writer.add_scalar('Validation/Avg_Reward', validation_reward, epoch)
         for i, freq in enumerate(total_action_freq):
             writer.add_scalar(f"ActionFrequency/A{i}", freq, epoch)
+        
+        writer.add_scalar('Validation/Avg_Reward', validation_reward, epoch)
         print(f"Average Reward: {validation_reward}\n")
 
 
@@ -139,6 +146,7 @@ if __name__ == "__main__":
     parser.add_argument('--epochs', type=int, help='amount of epochs for training run')
     # TODO Goal: View 1.000.000 frames per epoch. --> problem: one iter (1 or 4) frames?
     parser.add_argument('--iterations', type=int, help='amount of iterations per epoch')
+    parser.add_argument('--max_val_steps', type=int, help='maximum amount of steps per evaluation')
     parser.add_argument('--game', type=str, help='Atari game to train Agent on')
     parser.add_argument('--cfg', type=str, help='path to json config file',
                         default='parameter_files/paper_parameters.json')
@@ -152,6 +160,8 @@ if __name__ == "__main__":
         params.epochs = args.epochs
     if args.iterations:
         params.iterations = args.iterations
+    if args.max_val_steps:
+        params.agent_max_val_steps = args.max_val_steps
     if args.game:
         params.game = args.game
 
