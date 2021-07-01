@@ -102,3 +102,25 @@ class Parameters:
 
         else:
             self.__dict__[name] = value
+
+    def __str__(self):
+
+        out = "<table> <thead> <tr> <th> Parameter </th> <th> Value </th> </tr> </thead> <tbody>"
+        for name in self.__dict__.keys():
+            if name != 'help' and name != 'fixed':
+                out += " <tr> <td> "+name+" </td> <td> {} </td> </tr> ".format(getattr(self, name))
+        out += "</tbody> </table>"
+        return out
+    
+    def __repr(self):
+
+        return str(self)
+
+
+
+
+
+
+
+
+

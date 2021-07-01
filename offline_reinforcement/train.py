@@ -24,6 +24,8 @@ def train(params):
     if not exists(log_dir):
         makedirs(log_dir)
     writer = SummaryWriter(log_dir=log_dir)
+    
+    writer.add_text('Parameters', str(params))
 
     # create Atari game environment
     env = al.create_atari_environment(params.game, sticky_actions=params.env_sticky_actions)
@@ -147,6 +149,8 @@ if __name__ == "__main__":
     # TODO Goal: View 1.000.000 frames per epoch. --> problem: one iter (1 or 4) frames?
     parser.add_argument('--iterations', type=int, help='amount of iterations per epoch')
     parser.add_argument('--max_val_steps', type=int, help='maximum amount of steps per evaluation')
+    parser.add_argument('--history', type=int, help='agent history')
+    parser.add_argument('--heads', type=int, help='number of heads of the REM')
     parser.add_argument('--game', type=str, help='Atari game to train Agent on')
     parser.add_argument('--cfg', type=str, help='path to json config file',
                         default='parameter_files/paper_parameters.json')
@@ -162,6 +166,10 @@ if __name__ == "__main__":
         params.iterations = args.iterations
     if args.max_val_steps:
         params.agent_max_val_steps = args.max_val_steps
+    if args.history:
+        params.agent_history = args.history
+    if args.heads:
+        params.model_num_heads = args.heads
     if args.game:
         params.game = args.game
 
