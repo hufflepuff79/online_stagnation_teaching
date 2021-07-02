@@ -145,33 +145,31 @@ def online_validation(agent, env, max_step_count, render=False):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Parser to Initiate Agent Training")
     parser.add_argument('--data_dir', type=str, help='location of training data')
-    parser.add_argument('--epochs', type=int, help='amount of epochs for training run')
-    # TODO Goal: View 1.000.000 frames per epoch. --> problem: one iter (1 or 4) frames?
-    parser.add_argument('--iterations', type=int, help='amount of iterations per epoch')
-    parser.add_argument('--max_val_steps', type=int, help='maximum amount of steps per evaluation')
-    parser.add_argument('--history', type=int, help='agent history')
-    parser.add_argument('--heads', type=int, help='number of heads of the REM')
     parser.add_argument('--game', type=str, help='Atari game to train Agent on')
+    parser.add_argument('--epochs', type=int, help='amount of epochs for training run')
+    parser.add_argument('--iterations', type=int, help='amount of iterations per epoch')
+    parser.add_argument('--validation_runs', type=int, help='How many runs to make for test evaluation. Average over runs is returned')
+    parser.add_argument('--iter_target_update', type=int, help='Every <iter_target_update> iterations, the target net is updated')
+    parser.add_argument('--iter_buffer_update', type=int, help='Every <iter_buffer_update> iteraions, a new buffer is loaded from the transition data')
+    parser.add_argument('--adam_learning_rate', type=int, help='')
+    parser.add_argument('--adam_epsilon', type=int, help='')
+    parser.add_argument('--model_num_heads', type=int, help='number of heads of the REM')  
+    parser.add_argument('--agent_epsilon', type=int, help='')
+    parser.add_argument('--agent_gamma', type=int, help='')
+    parser.add_argument('--agent_history', type=int, help='agent history')
+    parser.add_argument('--agent_max_val_steps', type=int, help='')
+    parser.add_argument('--replay_batch_size', type=int, help='')
+    parser.add_argument('--env_sticky_actions', type=int, help='')
+    
     parser.add_argument('--cfg', type=str, help='path to json config file',
                         default='parameter_files/paper_parameters.json')
     args = parser.parse_args()
 
     params = Parameters(args.cfg)
 
-    if args.data_dir:
-        params.data_dir = args.data_dir
-    if args.epochs:
-        params.epochs = args.epochs
-    if args.iterations:
-        params.iterations = args.iterations
-    if args.max_val_steps:
-        params.agent_max_val_steps = args.max_val_steps
-    if args.history:
-        params.agent_history = args.history
-    if args.heads:
-        params.model_num_heads = args.heads
-    if args.game:
-        params.game = args.game
+    for arg in vars(args):
+        if arg != 'cfg' and getattr(args, arg):
+            setattr(params, arg, getattr(args, arg))
 
     params.fix()
 
