@@ -65,10 +65,12 @@ class REMAgent:
         # update
         with torch.no_grad():
             max_action_Qs, _ = torch.max(self.Q_target(batch_next_states, alphas), dim=1)
+            max_action_Qs = torch.unsqueeze(max_action_Qs, 1)
             td_targets = batch_rewards + self.gamma * max_action_Qs * (1.0-batch_done)
 
         self.optimizer.zero_grad()
-        Q_pred = self.Q(batch_states, alphas)[torch.arange(self.batch_size), batch_actions]
+        
+        Q_pred = self.Q(batch_states, alphas).gather(dim=1, index=batch_actions)
         loss = self.loss_function(Q_pred, td_targets)
         loss.backward()
         self.optimizer.step()
