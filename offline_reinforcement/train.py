@@ -63,7 +63,6 @@ def train(params):
     # initiate training
     print(f"\nStarting Training\nEpochs: {params.epochs}\nIterations per Epoch: {params.iterations}\n\n")
     for epoch in range(params.epochs):
-
         sp.increment_and_print("epoch")
         sp.print_statement("iter")
         sp.reset_element("iter")
@@ -71,8 +70,6 @@ def train(params):
         train_loss = 0
 
         for iteration in range(1, params.iterations + 1):
-
-            sp.increment_and_print("iter")
             train_loss += agent.train_batch()
 
             if iteration % params.iter_target_update == 0:
@@ -80,6 +77,8 @@ def train(params):
 
             if iteration % params.iter_buffer_update == 0:
                 agent.replay_buffer.load_new_buffer()
+
+            sp.increment_and_print("iter")
 
         train_loss /= params.iterations
        
@@ -95,11 +94,11 @@ def train(params):
         total_reward = 0
         total_action_freq = np.zeros(num_actions)
         for run in range(params.validation_runs):
-            sp.increment_and_print("valid")
             online_reward, action_freq = online_validation(agent=agent, env=env,
                                                            max_step_count=params.agent_max_val_steps)
             total_reward += online_reward
             total_action_freq += action_freq
+            sp.increment_and_print("valid")
 
         validation_reward = total_reward/params.validation_runs
         total_action_freq /= params.validation_runs
