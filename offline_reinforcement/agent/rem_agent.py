@@ -39,6 +39,9 @@ class REMAgent:
         # loss
         self.loss_function = torch.nn.SmoothL1Loss(beta=1.0)
 
+        # history
+        self.history = history
+
     def train_batch(self) -> None:
 
         # set network to train mode
@@ -47,11 +50,13 @@ class REMAgent:
         # sample replay buffer
         batch_states, batch_actions, batch_rewards, batch_next_states, batch_done = self.replay_buffer.get_minibatch(self.batch_size)
 
-        # fig, axs = plt.subplots(2, 2)
-        # axs = axs.flatten()
-        # for i in range(len(axs)):
-        #     axs[i].imshow(batch_states[0, i, :, :], cmap='gray')
-        # plt.show()
+        """
+        fig, axs = plt.subplots(1, self.history)
+        axs = axs.flatten()
+        for i in range(self.history):
+             axs[i].imshow(batch_states[0, i, :, :], cmap='gray')
+        plt.show()
+        """
 
         # random weights
         alphas = np.random.uniform(low=0, high=1, size=self.Q.num_heads)
@@ -86,11 +91,13 @@ class REMAgent:
         self.state_buffer.update(state)
         r = np.random.uniform()
 
-        # fig, axs = plt.subplots(2, 2)
-        # axs = axs.flatten()
-        # for i in range(len(axs)):
-        #     axs[i].imshow(self.state_buffer.states[0, i, :, :], cmap='gray')
-        # plt.show()
+        """
+        fig, axs = plt.subplots(1, self.history)
+        axs = axs.flatten()
+        for i in range(self.history):
+             axs[i].imshow(self.state_buffer.states[0, i, :, :], cmap='gray')
+        plt.show()
+        """
 
         alphas = np.full(shape=self.Q.num_heads, fill_value=1/self.Q.num_heads)
 

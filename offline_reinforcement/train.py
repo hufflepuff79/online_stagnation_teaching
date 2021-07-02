@@ -167,10 +167,8 @@ if __name__ == "__main__":
 
     params = Parameters(args.cfg)
 
-    for arg in vars(args):
-        if arg != 'cfg' and getattr(args, arg):
-            setattr(params, arg, getattr(args, arg))
-
+    params.overload(args, ignore=['cfg'])
+    
     params.fix()
 
     train(params)

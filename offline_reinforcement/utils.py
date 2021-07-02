@@ -95,6 +95,12 @@ class Parameters:
             setattr(self, key, data[key][0])
             setattr(self.help, key, data[key][1])
 
+    def overload(self, other, ignore = []):
+        for arg in vars(other):
+            if arg not in ignore and getattr(other, arg):
+                setattr(self, arg, getattr(other, arg))
+
+
     def __setattr__(self, name: str, value):
 
         if name != 'fixed' and self.fixed and name in self.__dict__:
