@@ -109,6 +109,11 @@ def train(params):
         writer.add_scalar('Validation/Avg_Reward', validation_reward, epoch)
         print(f"Average Reward: {validation_reward}\n")
 
+        # save weights at regular intervals
+        if epoch % params.agent_save_weights == 0:
+            weights_file = join(log_dir, "agent_weights_epoch_{}".format(epoch))
+            agent.save(weights_file)
+
 
 def online_validation(agent, env, max_step_count, render=False):
 
@@ -159,6 +164,7 @@ if __name__ == "__main__":
     parser.add_argument('--agent_max_val_steps', type=int, help='Maximum steps per evaluation run of agent, if not terminated before.')
     parser.add_argument('--replay_batch_size', type=int, help='Batch size for training the agent with the transition data')
     parser.add_argument('--env_sticky_actions', type=bool, help='If sticky actions should be used in online validation')
+    parser.add_argument("--agent_save_weights", type=int, help="Frequency at which the weights of network are saved")
     
     parser.add_argument('--cfg', type=str, help='path to json config file',
                         default='parameter_files/paper_parameters.json')

@@ -14,5 +14,6 @@
 	"agent_history": [4, "Number of states which are stacked as a multi-channel image in one go into the REM"],
 	"agent_max_val_steps": [150000, "Maximum steps per evaluation run of agent, if not terminated before."],
 	"replay_batch_size": [32, "Batch size for training the agent with the transition data"],
-	"env_sticky_actions": [true, "If sticky actions should be used in online validation"]
+	"env_sticky_actions": [true, "If sticky actions should be used in online validation"],
+	"agent_save_weights": [5, "Frequency (epochs) of saving the agent weights during traning"]
 }

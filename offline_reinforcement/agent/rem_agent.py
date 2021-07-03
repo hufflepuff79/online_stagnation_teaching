@@ -110,6 +110,9 @@ class REMAgent:
 
         return action_id
 
+    def save(self, file_name):
+        torch.save(self.Q.state_dict, file_name)
+
 
 class StateBuffer:
 
