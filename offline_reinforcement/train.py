@@ -111,7 +111,7 @@ def train(params):
 
         # save weights at regular intervals
         if epoch % params.agent_save_weights == 0:
-            weights_file = join(log_dir, "agent_weights_epoch_{}".format(epoch))
+            weights_file = join(log_dir, "agent_weights_epoch_{}.pth".format(epoch))
             agent.save(weights_file)
 
 
