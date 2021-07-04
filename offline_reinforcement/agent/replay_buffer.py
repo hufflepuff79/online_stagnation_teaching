@@ -38,7 +38,6 @@ class ReplayBuffer():
         return batch_state, batch_actions, batch_reward, batch_next_state, batch_done
 
     def load_new_buffer(self, suffix: int = None):
-        del self.data
         self.data = {}
         if not suffix:
             suffix = np.random.randint(low=0, high=50)
