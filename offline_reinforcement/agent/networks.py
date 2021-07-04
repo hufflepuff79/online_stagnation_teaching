@@ -31,7 +31,8 @@ class REM(nn.Module):
 
         if len(alphas) != self.num_heads:
             raise ValueError("weights need too be of same length as network heads")
-
+        
+        x = torch.div(x, 255.0)
         x = self.conv1(x)
         x = self.relu(x)
         x = self.conv2(x)
