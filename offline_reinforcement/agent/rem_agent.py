@@ -74,7 +74,7 @@ class REMAgent:
         loss = self.loss_function(Q_pred, td_targets)
         loss.backward()
         self.optimizer.step()
-        return loss
+        return loss.detach()
 
     def set_net_status(self, eval=True):
         """" Status of the networks set to train/eval"""
