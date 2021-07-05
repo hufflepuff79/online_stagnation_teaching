@@ -15,5 +15,6 @@
 	"agent_max_val_steps": [150000, "Maximum steps per evaluation run of agent, if not terminated before."],
 	"replay_batch_size": [32, "Batch size for training the agent with the transition data"],
 	"env_sticky_actions": [true, "If sticky actions should be used in online validation"],
-	"agent_save_weights": [5, "Frequency (epochs) of saving the agent weights during traning"]
+	"agent_save_weights": [5, "Frequency (epochs) of saving the agent weights during traning"],
+	"fixed_checkpoint": [null, "Fixed checkpoint number to debug. Default is None for random checkpoint"]
 }

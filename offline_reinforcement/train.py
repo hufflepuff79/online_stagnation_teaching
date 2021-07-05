@@ -52,7 +52,8 @@ def train(params):
     # create the REM Agent
     agent = REMAgent(Q_network, Q_target_network, num_actions, params.data_dir,
                      optimizer=optimizer, batch_size=params.replay_batch_size,
-                     epsilon=params.agent_epsilon, gamma=params.agent_gamma, history=params.agent_history)
+                     epsilon=params.agent_epsilon, gamma=params.agent_gamma,
+                     history=params.agent_history, suffix=params.fixed_checkpoint)
 
     # for logging
     sp = StatusPrinter()
@@ -76,7 +77,7 @@ def train(params):
                 agent.update_target()
 
             if iteration % params.iter_buffer_update == 0:
-                agent.replay_buffer.load_new_buffer()
+                agent.replay_buffer.load_new_buffer(suffix=params.fixed_checkpoint)
 
             sp.increment_and_print("iter")
 
@@ -165,6 +166,7 @@ if __name__ == "__main__":
     parser.add_argument('--replay_batch_size', type=int, help='Batch size for training the agent with the transition data')
     parser.add_argument('--env_sticky_actions', type=bool, help='If sticky actions should be used in online validation')
     parser.add_argument("--agent_save_weights", type=int, help="Frequency at which the weights of network are saved")
+    parser.add_argument("--fixed_checkpoint", type=int, help="Fixed checkpoint number to debug. Default is None for random checkpoint")
     
     parser.add_argument('--cfg', type=str, help='path to json config file',
                         default='parameter_files/paper_parameters.json')

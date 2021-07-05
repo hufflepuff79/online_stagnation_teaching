@@ -13,7 +13,7 @@ class REMAgent:
 
     def __init__(self, Q: nn.Module, Q_target: nn.Module, num_actions: int, data_dir: str,
                  optimizer: torch.optim.Optimizer, batch_size: int = 32,
-                 epsilon: int = 0.001, gamma: int = 0.99, history: int = 4):
+                 epsilon: int = 0.001, gamma: int = 0.99, history: int = 4, suffix = None):
 
         # setup networks
         self.Q = Q
@@ -23,7 +23,7 @@ class REMAgent:
         self.num_actions = num_actions
 
         # replay buffer
-        self.replay_buffer = ReplayBuffer(data_dir, history=history)
+        self.replay_buffer = ReplayBuffer(data_dir, history=history, suffix=suffix)
 
         # state buffer
         self.state_buffer = StateBuffer(size=history)
