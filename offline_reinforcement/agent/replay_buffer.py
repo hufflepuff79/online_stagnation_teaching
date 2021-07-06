@@ -41,7 +41,6 @@ class ReplayBuffer():
         self.data = {}
         if not suffix:
             suffix = np.random.randint(low=0, high=50)
-        print(suffix)
         for elem in ELEMS:
             filename = f'{self.buffer_path}{STORE_FILENAME_PREFIX}{elem}_ckpt.{suffix}.gz'
             with gzip.open(filename, 'rb') as infile:

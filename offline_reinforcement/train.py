@@ -11,6 +11,7 @@ import torch.nn as nn
 import numpy as np
 from os.path import exists, join
 from os import makedirs
+import wandb
 
 import time
 
@@ -19,10 +20,13 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def train(params):
 
+
     # create a summary writer for logging stats
     log_dir = join("train_stats", str(int(time.time())))
     if not exists(log_dir):
         makedirs(log_dir)
+    wandb.tensorboard.patch(root_logdir=log_dir)
+    wandb.init(entity="online_stagnation_teaching")
     writer = SummaryWriter(log_dir=log_dir)
     
     writer.add_text('Parameters', str(params))
