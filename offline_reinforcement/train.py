@@ -18,15 +18,16 @@ import time
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def train(params):
+def train(params, log_wb: bool = False):
 
 
     # create a summary writer for logging stats
     log_dir = join("train_stats", str(int(time.time())))
     if not exists(log_dir):
         makedirs(log_dir)
-    wandb.tensorboard.patch(root_logdir=log_dir)
-    wandb.init(entity="online_stagnation_teaching")
+    if log_wb:
+        wandb.tensorboard.patch(root_logdir=log_dir)
+        wandb.init(entity="online_stagnation_teaching")
     writer = SummaryWriter(log_dir=log_dir)
     
     writer.add_text('Parameters', str(params))
@@ -171,6 +172,7 @@ if __name__ == "__main__":
     parser.add_argument('--env_sticky_actions', type=bool, help='If sticky actions should be used in online validation')
     parser.add_argument("--agent_save_weights", type=int, help="Frequency at which the weights of network are saved")
     parser.add_argument("--fixed_checkpoint", type=int, help="Fixed checkpoint number to debug. Default is None for random checkpoint")
+    parser.add_argument("--wandb", action='store_true', help="Log with wandb")
     
     parser.add_argument('--cfg', type=str, help='path to json config file',
                         default='parameter_files/paper_parameters.json')
@@ -182,4 +184,4 @@ if __name__ == "__main__":
     
     params.fix()
 
-    train(params)
+    train(params, log_wb=args.wandb)
