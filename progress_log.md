@@ -36,10 +36,10 @@ After meeting TODOs:
 ##  Project Milestone 2 (29.06.2021)
 - [ ] Implementation
     - [ ] Test running the original implementation
-    - [ ] Visualize a sample of the dataset
-    - [ ] Code the agent as presented in the paper
-    - [ ] Code the network as presented in the paper
-    - [ ] Code the training pipeline
+    - [x] Visualize a sample of the dataset
+    - [x] Code the agent as presented in the paper
+    - [x] Code the network as presented in the paper
+    - [x] Code the training pipeline
     - [ ] Define experiments for the project
     - [ ] Complete experiments
 
