@@ -26,6 +26,14 @@ After meeting TODOs:
 - [ ] Checkpoint switching hyperparameter experiment
 - [ ] Start looking at which baselines we would like to implement
 
+## Meeting Four (06.07.2021)
+In the meeting we discussed the possible issues in the code that could be leading to the agent not learning properly. We discussed loading more than one replay buffer (atm using one), but that five as in the paper will not be possible due to the RAM constraints. Another point was the padding in the network, however this is now exactly implemented as in the paper (and even the minimal padding that we add should not cause any issues overall). We have not implemented logging using wandb and discussed logging more of the values that are process of the training to more efficiently find the issue. One thing that should definitely be logged from now on is the Q values. Projected plan tis to find and solve the bug by the end of this week and then spend the remaining two weeks on the baseline.
+
+- [ ] Log more values via WandB (including Q values)
+- [ ] Find the bug and fix
+- [ ] Send email updates when something new arises
+- [ ] Use more than one replay buffer
+
 ##  Project Milestone 1 (15.06.2021)
 - [x] Read and understand [An Optimistic Perspective on Offline Reinforcement Learning](https://arxiv.org/pdf/1907.04543.pdf)
 - [ ] Refresh RL knowledge with [RL Tutorial](https://github.com/andri27-ts/Reinforcement-Learning) and [Offline RL Tutorial Paper](https://arxiv.org/pdf/2005.01643.pdf#cite.kalashnikov2018qtopt)
