@@ -48,13 +48,11 @@ class ReplayBuffer():
         if not suffixes:
             suffixes = np.random.randint(low=0, high=50, size=self.n_ckpts)
         for elem in ELEMS:
-            for suffix in suffixes:
-                filename = f'{self.buffer_path}{STORE_FILENAME_PREFIX}{elem}_ckpt.{suffix}.gz'
-                with gzip.open(filename, 'rb') as infile:
-                    if elem in self.data:
-                        self.data[elem] = np.concatenate(self.data[elem], np.load(infile))
-                    else:
-                        self.data[elem] = np.load(infile)
+            paths = [f'{self.buffer_path}{STORE_FILENAME_PREFIX}{elem}_ckpt.{suffix}.gz' for suffix in suffixes]
+            files = (gzip.open(p, 'rb') for p in paths)
+            data_in = [np.memmap(f) for f in files]
+            self.data[elem] = np.vstack(data_in)
+
 
     def get_static_minibatch(self, batch_size: int = 32):
         batch_state = torch.empty(batch_size, self.history, 84, 84, dtype=torch.float32)
