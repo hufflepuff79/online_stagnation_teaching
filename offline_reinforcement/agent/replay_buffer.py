@@ -35,7 +35,7 @@ class ReplayBuffer():
         batch_done = torch.empty(batch_size, 1, dtype=torch.int).to(device)
         data_indicies = np.random.choice(self.n_ckpts, size=batch_size)
         rand_indicies = np.random.choice(len(self.data['action'][0]) - (self.history + 1), size=batch_size, replace=False)
-        for idx, rnd_idx, data_index in enumerate(zip(rand_indicies, data_indicies)):
+        for idx, (rnd_idx, data_index) in enumerate(zip(rand_indicies, data_indicies)):
             batch_state[idx, :, :, :] = torch.from_numpy(self.data['observation'][data_index][rnd_idx:rnd_idx+self.history, :, :])
             batch_next_state[idx, :, :, :] = torch.from_numpy(self.data['observation'][data_index][rnd_idx+1:rnd_idx+self.history+1, :, :])
             batch_actions[idx, :] = self.data['action'][data_index][rnd_idx + self.history]

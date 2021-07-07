@@ -75,6 +75,8 @@ class REMAgent:
             log["next_states"] = [wandb.Image(batch_next_states[0, i, :, :], caption=f"next state {i}") for i in range(self.history)]
             log["max_Q"] = torch.max(Q_pred)
             log["min_Q"] = torch.min(Q_pred)
+            log["min_td_target"] = torch.min(td_targets)
+            log["max_td_target"] = torch.max(td_targets)
 
         return loss.detach(), log
 

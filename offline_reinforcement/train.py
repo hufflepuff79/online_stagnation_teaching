@@ -86,7 +86,7 @@ def train(params, log_wb: bool = False, logging_freq: int = 100):
             train_loss += loss
 
             if logging:
-                wandb.log(log_dict)
+                wandb.log(log_dict, step=params.iterations*epoch + iteration)
 
             if iteration % params.iter_target_update == 0:
                 agent.update_target()
