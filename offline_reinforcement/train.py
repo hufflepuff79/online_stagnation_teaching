@@ -78,6 +78,9 @@ def train(params, log_wb: bool = False, logging_freq: int = 100):
 
         for iteration in range(params.iterations):
 
+            if iteration % params.iter_buffer_update == 0:
+                agent.replay_buffer.load_new_buffer(suffixes=params.fixed_checkpoint)
+
             logging = False
             if iteration % logging_freq == 0 and log_wb:
                 logging = True
@@ -88,11 +91,9 @@ def train(params, log_wb: bool = False, logging_freq: int = 100):
             if logging:
                 wandb.log(log_dict)
 
-            if iteration % params.iter_target_update == 0:
+            if (iteration+1) % params.iter_target_update == 0:
                 agent.update_target()
 
-            if iteration % params.iter_buffer_update == 0:
-                agent.replay_buffer.load_new_buffer(suffixes=params.fixed_checkpoint)
 
             sp.increment_and_print("iter")
 
