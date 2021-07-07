@@ -20,11 +20,6 @@ class ReplayBuffer():
         self.buffer_path = buffer_path
         self.n_ckpts = n_ckpts
 
-        if suffixes:
-            self.load_new_buffer(suffixes)
-        else:
-            self.load_new_buffer()
-
         self.history = history
 
     def get_minibatch(self, batch_size: int = 32):

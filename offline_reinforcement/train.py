@@ -76,7 +76,7 @@ def train(params, log_wb: bool = False, logging_freq: int = 100):
 
         train_loss = 0
 
-        for iteration in range(1, params.iterations + 1):
+        for iteration in range(params.iterations):
 
             logging = False
             if iteration % logging_freq == 0 and log_wb:
