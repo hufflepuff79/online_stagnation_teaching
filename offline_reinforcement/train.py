@@ -92,7 +92,7 @@ def train(params, log_wb: bool = False, logging_freq: int = 100):
                 agent.update_target()
 
             if iteration % params.iter_buffer_update == 0:
-                agent.replay_buffer.load_new_buffer(suffix=params.fixed_checkpoint)
+                agent.replay_buffer.load_new_buffer(suffixes=params.fixed_checkpoint)
 
             sp.increment_and_print("iter")
 
