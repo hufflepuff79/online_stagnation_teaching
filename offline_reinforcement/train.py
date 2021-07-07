@@ -58,7 +58,7 @@ def train(params, log_wb: bool = False, logging_freq: int = 100):
     agent = REMAgent(Q_network, Q_target_network, num_actions, params.data_dir,
                      optimizer=optimizer, batch_size=params.replay_batch_size,
                      epsilon=params.agent_epsilon, gamma=params.agent_gamma,
-                     history=params.agent_history, suffix=params.fixed_checkpoint,
+                     history=params.agent_history, suffixes=params.fixed_checkpoint,
                      n_ckpts=params.n_ckpts)
 
     # for logging

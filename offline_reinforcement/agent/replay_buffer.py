@@ -15,13 +15,13 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class ReplayBuffer():
 
-    def __init__(self, buffer_path, history=4, suffix = None, n_ckpts: int = 1) -> None:
+    def __init__(self, buffer_path, history=4, suffixes = None, n_ckpts: int = 1) -> None:
         self.data = {}
         self.buffer_path = buffer_path
         self.n_ckpts = n_ckpts
 
-        if suffix:
-            self.load_new_buffer(suffix)
+        if suffixes:
+            self.load_new_buffer(suffixes)
         else:
             self.load_new_buffer()
 
