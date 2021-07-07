@@ -52,7 +52,7 @@ class ReplayBuffer():
                 filename = f'{self.buffer_path}{STORE_FILENAME_PREFIX}{elem}_ckpt.{suffix}.gz'
                 with gzip.open(filename, 'rb') as infile:
                     if elem in self.data:
-                        self.data[elem] = np.concatenate(self.data[elem], np.load(infile))
+                        self.data[elem] = np.concatenate((self.data[elem], np.load(infile)))
                     else:
                         self.data[elem] = np.load(infile)
 
