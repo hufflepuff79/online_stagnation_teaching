@@ -34,12 +34,13 @@ class ReplayBuffer():
         batch_reward = torch.empty(batch_size, 1, dtype=torch.float32).to(device)
         batch_done = torch.empty(batch_size, 1, dtype=torch.int).to(device)
         rand_indicies = np.random.choice(len(self.data['action']) - (self.history + 1), size=batch_size, replace=False)
+        data_index = np.random.choice(self.n_ckpts)
         for idx, rnd_idx in enumerate(rand_indicies):
-            batch_state[idx, :, :, :] = torch.from_numpy(self.data['observation'][rnd_idx:rnd_idx+self.history, :, :])
-            batch_next_state[idx, :, :, :] = torch.from_numpy(self.data['observation'][rnd_idx+1:rnd_idx+self.history+1, :, :])
-            batch_actions[idx, :] = self.data['action'][rnd_idx + self.history]
-            batch_reward[idx, :] = torch.from_numpy(np.asarray(self.data['reward'][rnd_idx+self.history]))
-            batch_done[idx, :] = self.data['terminal'][rnd_idx+self.history]
+            batch_state[idx, :, :, :] = torch.from_numpy(self.data['observation'][data_index][rnd_idx:rnd_idx+self.history, :, :])
+            batch_next_state[idx, :, :, :] = torch.from_numpy(self.data['observation'][data_index][rnd_idx+1:rnd_idx+self.history+1, :, :])
+            batch_actions[idx, :] = self.data['action'][data_index][rnd_idx + self.history]
+            batch_reward[idx, :] = torch.from_numpy(np.asarray(self.data['reward'][data_index][rnd_idx+self.history]))
+            batch_done[idx, :] = self.data['terminal'][data_index][rnd_idx+self.history]
 
         return batch_state, batch_actions, batch_reward, batch_next_state, batch_done
 
@@ -50,8 +51,7 @@ class ReplayBuffer():
         for elem in ELEMS:
             paths = [f'{self.buffer_path}{STORE_FILENAME_PREFIX}{elem}_ckpt.{suffix}.gz' for suffix in suffixes]
             files = (gzip.open(p, 'rb') for p in paths)
-            data_in = [np.memmap(f) for f in files]
-            self.data[elem] = np.vstack(data_in)
+            self.data[elem] = [np.load(f) for f in files]
 
 
     def get_static_minibatch(self, batch_size: int = 32):
@@ -60,11 +60,12 @@ class ReplayBuffer():
         batch_actions = torch.empty(batch_size, 1, dtype=torch.long)
         batch_reward = torch.empty(batch_size, 1, dtype=torch.float32)
         batch_done = torch.empty(batch_size, 1, dtype=torch.int)
+        data_index = np.random.choice(self.n_ckpts)
         for index, rand_index in enumerate(range(batch_size)):
-            batch_state[index, :, :, :] = torch.from_numpy(self.data['observation'][rand_index: rand_index + self.history, :, :])
-            batch_next_state[index, :, :, :] = torch.from_numpy(self.data['observation'][rand_index + 1: rand_index + self.history + 1, :, :])
-            batch_actions[index, :] = self.data['action'][rand_index + self.history]
-            batch_reward[index, :] = torch.from_numpy(np.asarray(self.data['reward'][rand_index + self.history]))
-            batch_done[index, :] = self.data['terminal'][rand_index + self.history]
+            batch_state[index, :, :, :] = torch.from_numpy(self.data['observation'][data_index][rand_index: rand_index + self.history, :, :])
+            batch_next_state[index, :, :, :] = torch.from_numpy(self.data['observation'][data_index][rand_index + 1: rand_index + self.history + 1, :, :])
+            batch_actions[index, :] = self.data['action'][data_index][rand_index + self.history]
+            batch_reward[index, :] = torch.from_numpy(np.asarray(self.data['reward'][data_index][rand_index + self.history]))
+            batch_done[index, :] = self.data['terminal'][data_index][rand_index + self.history]
 
         return batch_state, batch_actions, batch_reward, batch_next_state, batch_done
