@@ -15,10 +15,16 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class ReplayBuffer():
 
-    def __init__(self, buffer_path, history=4, suffix = None) -> None:
+    def __init__(self, buffer_path, history=4, suffix = None, n_ckpts: int = 1) -> None:
         self.data = {}
         self.buffer_path = buffer_path
-        self.load_new_buffer(suffix)
+        self.n_ckpts = n_ckpts
+
+        if suffix:
+            self.load_new_buffer(suffix)
+        else:
+            self.load_new_buffer()
+
         self.history = history
 
     def get_minibatch(self, batch_size: int = 32):
@@ -37,14 +43,18 @@ class ReplayBuffer():
 
         return batch_state, batch_actions, batch_reward, batch_next_state, batch_done
 
-    def load_new_buffer(self, suffix: int = None):
+    def load_new_buffer(self, suffixes: int = None):
         self.data = {}
-        if not suffix:
-            suffix = np.random.randint(low=0, high=50)
+        if not suffixes:
+            suffixes = np.random.randint(low=0, high=50, size=self.n_ckpts)
         for elem in ELEMS:
-            filename = f'{self.buffer_path}{STORE_FILENAME_PREFIX}{elem}_ckpt.{suffix}.gz'
-            with gzip.open(filename, 'rb') as infile:
-                self.data[elem] = np.load(infile)
+            for suffix in suffixes:
+                filename = f'{self.buffer_path}{STORE_FILENAME_PREFIX}{elem}_ckpt.{suffix}.gz'
+                with gzip.open(filename, 'rb') as infile:
+                    if elem in self.data:
+                        self.data[elem] = np.concatenate(self.data[elem], np.load(infile))
+                    else:
+                        self.data[elem] = np.load(infile)
 
     def get_static_minibatch(self, batch_size: int = 32):
         batch_state = torch.empty(batch_size, self.history, 84, 84, dtype=torch.float32)

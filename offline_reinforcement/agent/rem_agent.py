@@ -5,6 +5,7 @@ from agent.networks import REM
 from agent.replay_buffer import ReplayBuffer
 import numpy as np
 import matplotlib.pyplot as plt
+import wandb
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -13,7 +14,7 @@ class REMAgent:
 
     def __init__(self, Q: nn.Module, Q_target: nn.Module, num_actions: int, data_dir: str,
                  optimizer: torch.optim.Optimizer, batch_size: int = 32,
-                 epsilon: int = 0.001, gamma: int = 0.99, history: int = 4, suffix = None):
+                 epsilon: int = 0.001, gamma: int = 0.99, history: int = 4, suffixes = None, n_ckpts = 1):
 
         # setup networks
         self.Q = Q
@@ -23,7 +24,7 @@ class REMAgent:
         self.num_actions = num_actions
 
         # replay buffer
-        self.replay_buffer = ReplayBuffer(data_dir, history=history, suffix=suffix)
+        self.replay_buffer = ReplayBuffer(data_dir, history=history, suffixes=suffixes, n_ckpts=n_ckpts)
 
         # state buffer
         self.state_buffer = StateBuffer(size=history)
@@ -42,21 +43,13 @@ class REMAgent:
         # history
         self.history = history
 
-    def train_batch(self) -> None:
+    def train_batch(self, logging: bool = False, epoch: int = 0) -> None:
 
         # set network to train mode
         self.set_net_status(eval=False)
 
         # sample replay buffer
         batch_states, batch_actions, batch_rewards, batch_next_states, batch_done = self.replay_buffer.get_minibatch(self.batch_size)
-
-        """
-        fig, axs = plt.subplots(1, self.history)
-        axs = axs.flatten()
-        for i in range(self.history):
-             axs[i].imshow(batch_states[0, i, :, :], cmap='gray')
-        plt.show()
-        """
 
         # random weights
         alphas = np.random.uniform(low=0, high=1, size=self.Q.num_heads)
@@ -74,7 +67,16 @@ class REMAgent:
         loss = self.loss_function(Q_pred, td_targets)
         loss.backward()
         self.optimizer.step()
-        return loss.detach()
+
+        log = {}
+
+        if logging:
+            log["states"] = [wandb.Image(batch_states[0, i, :, :], caption=f"state {i}") for i in range(self.history)]
+            log["next_states"] = [wandb.Image(batch_next_states[0, i, :, :], caption=f"next state {i}") for i in range(self.history)]
+            log["max_Q"] = torch.max(Q_pred)
+            log["min_Q"] = torch.min(Q_pred)
+
+        return loss.detach(), log
 
     def set_net_status(self, eval=True):
         """" Status of the networks set to train/eval"""

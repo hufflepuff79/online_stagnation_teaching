@@ -18,7 +18,7 @@ import time
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def train(params, log_wb: bool = False):
+def train(params, log_wb: bool = False, logging_freq: int = 100):
 
 
     # create a summary writer for logging stats
@@ -58,7 +58,8 @@ def train(params, log_wb: bool = False):
     agent = REMAgent(Q_network, Q_target_network, num_actions, params.data_dir,
                      optimizer=optimizer, batch_size=params.replay_batch_size,
                      epsilon=params.agent_epsilon, gamma=params.agent_gamma,
-                     history=params.agent_history, suffix=params.fixed_checkpoint)
+                     history=params.agent_history, suffix=params.fixed_checkpoint,
+                     n_ckpts=params.n_ckpts)
 
     # for logging
     sp = StatusPrinter()
@@ -76,7 +77,16 @@ def train(params, log_wb: bool = False):
         train_loss = 0
 
         for iteration in range(1, params.iterations + 1):
-            train_loss += agent.train_batch()
+
+            logging = False
+            if iteration % logging_freq == 0 and log_wb:
+                logging = True
+
+            loss, log_dict = agent.train_batch(logging)
+            train_loss += loss
+
+            if logging:
+                wandb.log(log_dict)
 
             if iteration % params.iter_target_update == 0:
                 agent.update_target()
@@ -172,6 +182,7 @@ if __name__ == "__main__":
     parser.add_argument('--env_sticky_actions', type=bool, help='If sticky actions should be used in online validation')
     parser.add_argument("--agent_save_weights", type=int, help="Frequency at which the weights of network are saved")
     parser.add_argument("--fixed_checkpoint", type=int, help="Fixed checkpoint number to debug. Default is None for random checkpoint")
+    parser.add_argument("--n_ckpts", type=int, help="Number of checkpoints loaded in replay buffer at once")
     parser.add_argument("--wandb", action='store_true', help="Log with wandb")
     
     parser.add_argument('--cfg', type=str, help='path to json config file',
