@@ -33,9 +33,9 @@ class ReplayBuffer():
         batch_actions = torch.empty(batch_size, 1, dtype=torch.long).to(device)
         batch_reward = torch.empty(batch_size, 1, dtype=torch.float32).to(device)
         batch_done = torch.empty(batch_size, 1, dtype=torch.int).to(device)
-        data_index = np.random.choice(self.n_ckpts)
-        rand_indicies = np.random.choice(len(self.data['action'][data_index]) - (self.history + 1), size=batch_size, replace=False)
-        for idx, rnd_idx in enumerate(rand_indicies):
+        data_indicies = np.random.choice(self.n_ckpts, size=batch_size)
+        rand_indicies = np.random.choice(len(self.data['action'][0]) - (self.history + 1), size=batch_size, replace=False)
+        for idx, rnd_idx, data_index in enumerate(zip(rand_indicies, data_indicies)):
             batch_state[idx, :, :, :] = torch.from_numpy(self.data['observation'][data_index][rnd_idx:rnd_idx+self.history, :, :])
             batch_next_state[idx, :, :, :] = torch.from_numpy(self.data['observation'][data_index][rnd_idx+1:rnd_idx+self.history+1, :, :])
             batch_actions[idx, :] = self.data['action'][data_index][rnd_idx + self.history]
@@ -52,6 +52,7 @@ class ReplayBuffer():
             paths = [f'{self.buffer_path}{STORE_FILENAME_PREFIX}{elem}_ckpt.{suffix}.gz' for suffix in suffixes]
             files = (gzip.open(p, 'rb') for p in paths)
             self.data[elem] = [np.load(f) for f in files]
+            [f.close() for f in files]
 
 
     def get_static_minibatch(self, batch_size: int = 32):
