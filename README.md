@@ -5,7 +5,7 @@ In this project we aim to implement the Offline Reinforcement Learning approach 
 
 # Local Setup
 To run our project locally you will need to install the following:
- - Dopamine (install via source [directions](https://github.com/google/dopamine#install-via-source))
+ - Dopamine (install via source [directions](https://github.com/google/dopamine#install-via-source), or with [conda](https://anaconda.org/powerai/dopamine-rl))
  - PyTorch
  - Atarti games [training data](https://console.cloud.google.com/storage/browser/atari-replay-datasets/dqn?pageState=(%22StorageObjectListTable%22:(%22f%22:%22%255B%255D%22))&prefix=&forceOnObjectsSortingFiltering=false)
 
