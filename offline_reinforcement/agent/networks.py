@@ -21,6 +21,12 @@ class REM(nn.Module):
         self.relu = nn.ReLU()
         self.flatten = nn.Flatten()
 
+        nn.init.kaiming_uniform_(self.conv1.weight.data, mode='fan_in', nonlinearity='relu')
+        nn.init.kaiming_uniform_(self.conv2.weight.data, mode='fan_in', nonlinearity='relu')
+        nn.init.kaiming_uniform_(self.conv3.weight.data, mode='fan_in', nonlinearity='relu')
+        nn.init.kaiming_uniform_(self.lin1.weight.data, mode='fan_in', nonlinearity='relu')
+        [nn.init.kaiming_uniform_(head.weight.data, mode='fan_in', nonlinearity='relu') for head in self.heads]
+
     def forward(self, x: torch.Tensor, alphas: list):
         """
         Forward pass of REM-Network
