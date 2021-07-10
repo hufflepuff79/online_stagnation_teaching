@@ -18,7 +18,7 @@ import time
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def train(params, log_wb: bool = False, logging_freq: int = 100):
+def train(params, log_wb: bool = False, logging_freq: int = 1000):
 
 
     # create a summary writer for logging stats
@@ -60,6 +60,9 @@ def train(params, log_wb: bool = False, logging_freq: int = 100):
                      epsilon=params.agent_epsilon, gamma=params.agent_gamma,
                      history=params.agent_history, suffixes=params.fixed_checkpoint,
                      n_ckpts=params.n_ckpts)
+    
+    if log_wb:
+        wandb.watch(agent.Q, criterion=agent.loss_function, log="all", log_freq=1000, idx=0)
 
     # for logging
     sp = StatusPrinter()

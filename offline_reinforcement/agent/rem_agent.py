@@ -20,6 +20,7 @@ class REMAgent:
         self.Q = Q
         self.Q_target = Q_target
         self.Q_target.load_state_dict(self.Q.state_dict())
+        self.Q_target.eval()
 
         self.num_actions = num_actions
 
@@ -71,12 +72,8 @@ class REMAgent:
         log = {}
 
         if logging:
-            log["states"] = [wandb.Image(batch_states[0, i, :, :], caption=f"state {i}") for i in range(self.history)]
-            log["next_states"] = [wandb.Image(batch_next_states[0, i, :, :], caption=f"next state {i}") for i in range(self.history)]
-            log["max_Q"] = torch.max(Q_pred)
-            log["min_Q"] = torch.min(Q_pred)
-            log["min_td_target"] = torch.min(td_targets)
-            log["max_td_target"] = torch.max(td_targets)
+            log["avg_Q"] = torch.mean(Q_pred)
+            log["avg_td_target"] = torch.mean(td_targets)
 
         return loss.detach(), log
 
@@ -84,10 +81,8 @@ class REMAgent:
         """" Status of the networks set to train/eval"""
         if eval:
             self.Q.eval()
-            self.Q_target.eval()
         else:
             self.Q.train()
-            self.Q_target.train()
 
     def update_target(self) -> None:
         self.Q_target.load_state_dict(self.Q.state_dict())
