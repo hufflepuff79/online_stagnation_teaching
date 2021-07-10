@@ -8,7 +8,7 @@ To run our project locally you will need to install the following:
  - Dopamine (install via source [directions](https://github.com/google/dopamine#install-via-source), or with [conda](https://anaconda.org/powerai/dopamine-rl))
  - PyTorch
  - Atarti games [training data](https://console.cloud.google.com/storage/browser/atari-replay-datasets/dqn?pageState=(%22StorageObjectListTable%22:(%22f%22:%22%255B%255D%22))&prefix=&forceOnObjectsSortingFiltering=false)
- - Additionally, you can use the [pkgs.txt](offline_reinforcement/pkgs.txt) file to create a conda environment that contains more of the necessary prerequisites 
+ - Additionally, you can use the [pkgs.txt](offline_reinforcement/pkgs.txt) file to create a conda environment that contains more of the necessary prerequisites (simply use the command *conda create --name NEWENV --file pkgs.txt*
 
 # Starting a Training Run
 To start a training run of the REM Agent, execute the command `python train.py`. 
