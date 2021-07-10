@@ -19,10 +19,12 @@ def test(params, weights):
     Q_network = REM(num_actions=num_actions,
                     num_heads=params.model_num_heads,
                     agent_history=params.agent_history)
+    Q_target = REM(num_actions=num_actions,
+                    num_heads=params.model_num_heads,
+                    agent_history=params.agent_history)
 
-    Q_network.load_state_dict(torch.load(weights))
+    Q_network.load_state_dict(torch.load(weights, map_location=device))
     Q_network = Q_network.to(device)
-    Q_target = Q_network.deepcopy()
 
     agent = REMAgent(Q_network, Q_target, num_actions, params.data_dir, optimizer=None)
     agent.set_net_status(eval=True)
@@ -53,6 +55,7 @@ if __name__ == "__main__":
 
     parser.add_argument('--cfg', type=str, help='path to json config file',
                         default='parameter_files/paper_parameters.json')
+    parser.add_argument('--model_num_heads', type=int, help='Number of heads of the REM')  
     args = parser.parse_args()
 
     params = Parameters(args.cfg)
