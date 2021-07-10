@@ -2,10 +2,10 @@
 	"game": ["Breakout", "Name of the atari environment"],
 	"data_dir": ["data/Breakout/1/", "Path to the transition data"],
 	"epochs": [200, "Number of test evaluations. Every epoch there are <iterations> iterations"],
-	"iterations": [8000, "Number of iterations per epoch. Agent gets and trains one batch per epoch"],
+	"iterations": [250000, "Number of iterations per epoch. Agent gets and trains one batch per epoch"],
 	"validation_runs": [5, "How many runs to make for test evaluation. Average over runs is returned"],
 	"iter_target_update": [2000, "Every <iter_target_update> iterations, the target net is updated"],
-        "iter_buffer_update": [2000, "Every <iter_buffer_update> iteraions, a new buffer is loaded from the transition data"],
+        "iter_buffer_update": [250023, "Every <iter_buffer_update> iteraions, a new buffer is loaded from the transition data"],
         "adam_learning_rate": [0.00005, "Learning rate of ADAM optimizer"],
 	"adam_epsilon": [0.0003125, "Stabilization term of ADAM optimizer"],
         "model_num_heads": [200, "Number of heads of the REM"],
@@ -16,5 +16,6 @@
 	"replay_batch_size": [32, "Batch size for training the agent with the transition data"],
 	"env_sticky_actions": [true, "If sticky actions should be used in online validation"],
 	"agent_save_weights": [5, "Frequency (epochs) of saving the agent weights during traning"],
-	"fixed_checkpoint": [null, "Fixed checkpoint number to debug. Default is None for random checkpoint"]
+	"fixed_checkpoint": [null, "Fixed checkpoint number to debug. Default is None for random checkpoint"],
+	"n_ckpts": [1, "Number of checkpoints loaded in replay buffer at once"]
 }
