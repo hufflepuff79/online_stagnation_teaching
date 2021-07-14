@@ -100,6 +100,9 @@ class Parameters:
             if arg not in ignore and getattr(other, arg):
                 setattr(self, arg, getattr(other, arg))
 
+    def as_dict(self):
+        return {key:val for key, val in self.__dict__.items() if (key != "fixed" and key != "help")}
+
 
     def __setattr__(self, name: str, value):
 

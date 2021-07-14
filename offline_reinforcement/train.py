@@ -21,16 +21,9 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 def train(params, log_wb: bool = False, logging_freq: int = 1000):
 
 
-    # create a summary writer for logging stats
-    log_dir = join("train_stats", str(int(time.time())))
-    if not exists(log_dir):
-        makedirs(log_dir)
+    # create wandb for logging stats
     if log_wb:
-        wandb.tensorboard.patch(root_logdir=log_dir)
-        wandb.init(entity="online_stagnation_teaching")
-    writer = SummaryWriter(log_dir=log_dir)
-    
-    writer.add_text('Parameters', str(params))
+        wandb.init(entity="online_stagnation_teaching", config=params.as_dict())
 
     # create Atari game environment
     env = al.create_atari_environment(params.game, sticky_actions=params.env_sticky_actions)
@@ -63,9 +56,6 @@ def train(params, log_wb: bool = False, logging_freq: int = 1000):
                      history=params.agent_history, suffixes=params.fixed_checkpoint,
                      n_ckpts=params.n_ckpts)
     
-    if log_wb:
-        wandb.watch(agent.Q, criterion=agent.loss_function, log="all", log_freq=1000, idx=0)
-
     # for logging
     sp = StatusPrinter()
     sp.add_counter("epoch", "Epochs", params.epochs, 0, bold=True)
@@ -94,7 +84,7 @@ def train(params, log_wb: bool = False, logging_freq: int = 1000):
             train_loss += loss
 
             if logging:
-                wandb.log(log_dict)
+                wandb.log({**log_dict, **{'epoch' : epoch}})
 
             if (iteration+1) % params.iter_target_update == 0:
                 agent.update_target()
@@ -103,8 +93,9 @@ def train(params, log_wb: bool = False, logging_freq: int = 1000):
             sp.increment_and_print("iter")
 
         train_loss /= params.iterations
-       
-        writer.add_scalar('Training/Avg_Loss', train_loss, epoch)
+      
+        if log_wb:
+            wandb.log({'Training/Avg_Loss' : train_loss, 'epoch': epoch})
         print(f"Average Training Loss: {train_loss}")
 
         # online validation
@@ -125,10 +116,11 @@ def train(params, log_wb: bool = False, logging_freq: int = 1000):
         validation_reward = total_reward/params.validation_runs
         total_action_freq /= params.validation_runs
 
-        for i, freq in enumerate(total_action_freq):
-            writer.add_scalar(f"ActionFrequency/{action_names[i]}", freq, epoch)
-        
-        writer.add_scalar('Validation/Avg_Reward', validation_reward, epoch)
+        if log_wb:
+            for i, freq in enumerate(total_action_freq):
+                wandb.log({f'ActionFrequency/{action_names[i]}' : freq, 'epoch': epoch})
+    
+            wandb.log({'Validation/Avg_Reward' : validation_reward, 'epoch': epoch})
         print(f"Average Reward: {validation_reward}\n")
 
         # save weights at regular intervals
