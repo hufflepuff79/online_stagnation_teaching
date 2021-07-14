@@ -37,7 +37,7 @@ def test(params, weights):
         done = False
 
         while not done:
-            action = agent.act(state, deterministic=True)
+            action = agent.act(state, deterministic=False)
             state, reward, done, _ = env.step(action)
             state = torch.from_numpy(state).float()
             state = torch.reshape(state, (1, 1, state.shape[0], state.shape[1]))
