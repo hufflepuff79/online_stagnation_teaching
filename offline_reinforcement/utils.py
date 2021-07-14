@@ -14,7 +14,7 @@ class StatusPrinter:
     def add_bar(self, name: str, statement: str, max_value: int,
                 num_blocks: int = 30, value: int = 0, bold: bool = False):
 
-        self.elements[name] = ("\033[1;4m"*bold+statement+"\033[0m", ProgressBar(max_value, num_blocks, value), "bar")
+        self.elements[name] = ("\033[1m"*bold+statement+"\033[0m", ProgressBar(max_value, num_blocks, value), "bar")
 
     def add_counter(self, name: str, statement: str, max_value: int, value: int = 0, bold: bool = False):
 
@@ -36,8 +36,7 @@ class StatusPrinter:
                 prev_b != curr_b or
                 self.elements[name][1].value == self.elements[name][1].max_value):
 
-                    print("  "+str(self.elements[name][1]), end="\r" if
-                                   self.elements[name][1].value < self.elements[name][1].max_value else "\n")
+                    print("  "+str(self.elements[name][1]), end="\r")
 
     def print_statement(self, name: str):
 
@@ -47,6 +46,14 @@ class StatusPrinter:
 
         self.elements[name][1].reset()
 
+    def done_element(self, name: str):
+        
+        if self.elements[name][2] == "counter":
+            print("\033[32m"+self.elements[name][0]+": {}/{}".format(self.elements[name][1].value,
+                                                          self.elements[name][1].max_value)+"\033[0m")
+
+        elif self.elements[name][2] == "bar":
+            print("\033[32m"+"  "+str(self.elements[name][1])+"\033[0m", end="\n")
 
 class ProgressBar:
 

@@ -20,10 +20,15 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def train(params, log_wb: bool = False, logging_freq: int = 1000):
 
-
     # create wandb for logging stats
     if log_wb:
         wandb.init(entity="online_stagnation_teaching", config=params.as_dict())
+    
+    # directory to log agent parameters
+    log_dir = join("train_stats", wandb.run.name if log_wb else str(int(time.time())))
+    if not exists(log_dir):
+        makedirs(log_dir)
+
 
     # create Atari game environment
     env = al.create_atari_environment(params.game, sticky_actions=params.env_sticky_actions)
@@ -60,7 +65,7 @@ def train(params, log_wb: bool = False, logging_freq: int = 1000):
     sp = StatusPrinter()
     sp.add_counter("epoch", "Epochs", params.epochs, 0, bold=True)
     sp.add_bar("iter", "Iteration Progress", params.iterations)
-    sp.add_bar("valid", "Validation Progress", params.validation_runs)
+    sp.add_bar("valid", "Validation Progress", params.agent_total_steps + params.agent_episode_max_steps)
 
     # initiate training
     print(f"\nStarting Training\nEpochs: {params.epochs}\nIterations per Epoch: {params.iterations}\n\n")
@@ -92,6 +97,7 @@ def train(params, log_wb: bool = False, logging_freq: int = 1000):
 
             sp.increment_and_print("iter")
 
+        sp.done_element("iter")
         train_loss /= params.iterations
       
         if log_wb:
@@ -104,24 +110,19 @@ def train(params, log_wb: bool = False, logging_freq: int = 1000):
         sp.print_statement("valid")
         sp.reset_element("valid")
 
-        total_reward = 0
-        total_action_freq = np.zeros(num_actions)
-        for run in range(params.validation_runs):
-            online_reward, action_freq = online_validation(agent=agent, env=env,
-                                                           max_step_count=params.agent_max_val_steps)
-            total_reward += online_reward
-            total_action_freq += action_freq
-            sp.increment_and_print("valid")
-
-        validation_reward = total_reward/params.validation_runs
-        total_action_freq /= params.validation_runs
+        average_reward, action_freq = online_validation(agent=agent, env=env,
+                                                        total_steps=params.agent_total_steps,
+                                                        episode_max_steps=params.agent_episode_max_steps,
+                                                        status_func=sp.increment_and_print,
+                                                        status_arg="valid")
+        sp.done_element("valid")
 
         if log_wb:
-            for i, freq in enumerate(total_action_freq):
+            for i, freq in enumerate(action_freq):
                 wandb.log({f'ActionFrequency/{action_names[i]}' : freq, 'epoch': epoch})
     
-            wandb.log({'Validation/Avg_Reward' : validation_reward, 'epoch': epoch})
-        print(f"Average Reward: {validation_reward}\n")
+            wandb.log({'Validation/Avg_Reward' : average_reward, 'epoch': epoch})
+        print(f"Average Reward: {average_reward}\n")
 
         # save weights at regular intervals
         if epoch % params.agent_save_weights == 0:
@@ -129,34 +130,46 @@ def train(params, log_wb: bool = False, logging_freq: int = 1000):
             agent.save(weights_file)
 
 
-def online_validation(agent, env, max_step_count, render=False):
+def online_validation(agent, env, total_steps, episode_max_steps, status_func=lambda *args :None, status_arg=None, render=False):
 
-    step_count = 0
+    # total step count
+    tsc = 0 
     total_reward = 0
+    num_episodes = 0
 
-    done = False
-    state = env.reset()
-    state = torch.from_numpy(state).float()
-    state = torch.reshape(state, (1, 1, state.shape[0], state.shape[1]))
-    agent.state_buffer.reset(state)
+    while tsc < total_steps:
 
-    freq_actions = np.zeros(env.action_space.n)
-
-    while not done and step_count < max_step_count:
-        action = agent.act(state, deterministic=False)
-        state, reward, done, _ = env.step(action)
+        # episode step count
+        esc = 0
+        done = False
+        state = env.reset()
         state = torch.from_numpy(state).float()
         state = torch.reshape(state, (1, 1, state.shape[0], state.shape[1]))
-        freq_actions[action] += 1
+        agent.state_buffer.reset(state)
 
-        if render:
-            time.sleep(0.03)
-            env.render("human")
+        freq_actions = np.zeros(env.action_space.n)
 
-        total_reward += reward
-        step_count += 1
+        while not done and esc < episode_max_steps:
+            action = agent.act(state, deterministic=False)
+            state, reward, done, _ = env.step(action)
+            state = torch.from_numpy(state).float()
+            state = torch.reshape(state, (1, 1, state.shape[0], state.shape[1]))
+            freq_actions[action] += 1
 
-    freq_actions /= step_count
+            if render:
+                time.sleep(0.03)
+                env.render("human")
+
+            total_reward += reward
+            esc += 1
+            tsc += 1
+            status_func(status_arg)
+
+        num_episodes += 1
+
+    freq_actions /= tsc
+    total_reward /= num_episodes
+
     return total_reward, freq_actions
 
 
@@ -175,7 +188,8 @@ if __name__ == "__main__":
     parser.add_argument('--agent_epsilon', type=float, help='Epsilon-greedy parameter for acting of the agent')
     parser.add_argument('--agent_gamma', type=float, help='Discount factor of the REM agent')
     parser.add_argument('--agent_history', type=int, help='Number of states which are stacked as a multi-channel image in one go into the REM')
-    parser.add_argument('--agent_max_val_steps', type=int, help='Maximum steps per evaluation run of agent, if not terminated before.')
+    parser.add_argument('--agent_total_steps', type=int, help='Total steps per evaluation run of agent. If over this value no new episode is started.')
+    parser.add_argument('--agent_episode_max_steps', type=int, help='Maximum steps per episode of agent, if not terminated before.')
     parser.add_argument('--replay_batch_size', type=int, help='Batch size for training the agent with the transition data')
     parser.add_argument('--env_sticky_actions', type=bool, help='If sticky actions should be used in online validation')
     parser.add_argument("--agent_save_weights", type=int, help="Frequency at which the weights of network are saved")
