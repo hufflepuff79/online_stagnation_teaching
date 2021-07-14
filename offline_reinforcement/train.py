@@ -34,6 +34,8 @@ def train(params, log_wb: bool = False, logging_freq: int = 1000):
 
     # create Atari game environment
     env = al.create_atari_environment(params.game, sticky_actions=params.env_sticky_actions)
+    action_names = env.environment.unwrapped.get_action_meanings()
+
     num_actions = env.action_space.n
 
     # create the Q network and Q target network
@@ -124,7 +126,7 @@ def train(params, log_wb: bool = False, logging_freq: int = 1000):
         total_action_freq /= params.validation_runs
 
         for i, freq in enumerate(total_action_freq):
-            writer.add_scalar(f"ActionFrequency/A{i}", freq, epoch)
+            writer.add_scalar(f"ActionFrequency/{action_names[i]}", freq, epoch)
         
         writer.add_scalar('Validation/Avg_Reward', validation_reward, epoch)
         print(f"Average Reward: {validation_reward}\n")
