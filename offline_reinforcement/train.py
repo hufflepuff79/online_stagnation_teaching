@@ -119,7 +119,7 @@ def train(params, log_wb: bool = False, logging_freq: int = 1000):
 
         if log_wb:
             for i, freq in enumerate(action_freq):
-                wandb.log({f'ActionFrequency/{action_names[i]}' : freq, 'epoch': epoch})
+                wandb.log({f'ActionFrequency/A{i}: {action_names[i]}' : freq, 'epoch': epoch})
     
             wandb.log({'Validation/Avg_Reward' : average_reward, 'epoch': epoch})
         print(f"Average Reward: {average_reward}\n")
