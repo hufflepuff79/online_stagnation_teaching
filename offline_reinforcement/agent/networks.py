@@ -37,7 +37,7 @@ class REM(nn.Module):
 
         if len(alphas) != self.num_heads:
             raise ValueError("weights need too be of same length as network heads")
-        
+
         x = torch.div(x, 255.0)
         x = self.conv1(x)
         x = self.relu(x)
@@ -49,4 +49,46 @@ class REM(nn.Module):
         x = self.lin1(x)
         x = self.relu(x)
 
-        return sum(alpha*lin(x) for lin, alpha in zip(self.heads, alphas))
+        return sum(alpha * lin(x) for lin, alpha in zip(self.heads, alphas))
+
+
+class Actor(nn.Module):
+    """Used for TD3+BC Algorithm based on
+    'A minimalist Approach to Offline Reinforcement Learning'
+    by Fujimoto and Gu et.al"""
+
+    def __init__(self, in_features, out_features):
+        self.lin1 = nn.Linear(in_features=in_features, out_features=256)
+        self.lin2 = nn.Linear(in_features=256, out_features=256)
+        self.lin3 = nn.Linear(in_features=256, out_features=out_features)
+
+        self.relu = nn.ReLU()
+
+    def forward(self, x):
+        x = self.lin1(x)
+        x = self.relu(x)
+        x = self.lin2(x)
+        x = self.relu(x)
+        x = self.lin3(x)
+        return x
+
+
+class Critic(nn.Module):
+    """Used for TD3+BC Algorithm based on
+    'A minimalist Approach to Offline Reinforcement Learning'
+    by Fujimoto and Gu et.al"""
+
+    def __init__(self, in_features, out_features):
+        self.lin1 = nn.Linear(in_features=in_features, out_features=256)
+        self.lin2 = nn.Linear(in_features=256, out_features=256)
+        self.lin3 = nn.Linear(in_features=256, out_features=out_features)
+
+        self.relu = nn.ReLU()
+
+    def forward(self, x):
+        x = self.lin1(x)
+        x = self.relu(x)
+        x = self.lin2(x)
+        x = self.relu(x)
+        x = self.lin3(x)
+        return x
