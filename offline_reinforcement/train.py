@@ -69,6 +69,15 @@ def train(params, log_wb: bool = False, logging_freq: int = 1000):
 
     # initiate training
     print(f"\nStarting Training\nEpochs: {params.epochs}\nIterations per Epoch: {params.iterations}\n\n")
+
+    # Use the smaller split ckpts or not
+    try:
+        load_new_buffer_params = {'suffixes': params.fixed_checkpoint,
+                                    'use_splits': True if params.num_split != 0 else False,
+                                    'max_suffix': params.num_split}
+    except:
+        load_new_buffer_params = {'suffixes': params.fixed_checkpoint}
+
     for epoch in range(params.epochs):
         sp.increment_and_print("epoch")
         sp.print_statement("iter")
@@ -79,7 +88,7 @@ def train(params, log_wb: bool = False, logging_freq: int = 1000):
         for iteration in range(params.iterations):
 
             if iteration % params.iter_buffer_update == 0:
-                agent.replay_buffer.load_new_buffer(suffixes=params.fixed_checkpoint)
+                agent.replay_buffer.load_new_buffer(**load_new_buffer_params)
 
             logging = False
             if iteration % logging_freq == 0 and log_wb:
@@ -197,6 +206,7 @@ if __name__ == "__main__":
     parser.add_argument("--agent_save_weights", type=int, help="Frequency at which the weights of network are saved")
     parser.add_argument("--fixed_checkpoint", type=int, help="Fixed checkpoint number to debug. Default is None for random checkpoint")
     parser.add_argument("--n_ckpts", type=int, help="Number of checkpoints loaded in replay buffer at once")
+    parser.add_argument("--num_split", type=int, default=0, help="Only set if you want to use the split checkpoints. Then set this parameter to the max index of a split_ckpt")
     parser.add_argument("--wandb", action='store_true', help="Log with wandb")
     
     parser.add_argument('--cfg', type=str, help='path to json config file',
