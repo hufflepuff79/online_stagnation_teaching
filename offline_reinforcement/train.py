@@ -181,7 +181,7 @@ def online_validation(agent, env, total_steps, episode_max_steps, status_func=la
     total_freq_actions /= tsc
     total_reward /= num_episodes
 
-    return total_reward, freq_actions
+    return total_reward, total_freq_actions
 
 
 if __name__ == "__main__":
