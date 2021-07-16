@@ -136,6 +136,7 @@ def online_validation(agent, env, total_steps, episode_max_steps, status_func=la
     tsc = 0 
     total_reward = 0
     num_episodes = 0
+    total_freq_actions = np.zeros(env.action_space.n)
 
     while tsc < total_steps:
 
@@ -166,8 +167,9 @@ def online_validation(agent, env, total_steps, episode_max_steps, status_func=la
             status_func(status_arg)
 
         num_episodes += 1
+        total_freq_actions += freq_actions 
 
-    freq_actions /= tsc
+    total_freq_actions /= tsc
     total_reward /= num_episodes
 
     return total_reward, freq_actions
