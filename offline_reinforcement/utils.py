@@ -53,7 +53,8 @@ class StatusPrinter:
                                                           self.elements[name][1].max_value)+"\033[0m")
 
         elif self.elements[name][2] == "bar":
-            print("\033[32m"+"  "+str(self.elements[name][1])+"\033[0m", end="\n")
+            self.elements[name][1].set_value(self.elements[name][1].max_value)
+            print("  "+str(self.elements[name][1]), end="\n")
 
 class ProgressBar:
 
@@ -68,6 +69,11 @@ class ProgressBar:
     def increment(self):
         self.value += 1
         self.blocks = int(self.value / self.block_size)
+
+    def set_value(self, value):
+        self.value = value
+        self.blocks = int(self.value / self.block_size)
+
 
     def reset(self):
         self.value = 0

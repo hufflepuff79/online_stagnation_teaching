@@ -39,12 +39,15 @@ class ReplayBuffer():
 
         return batch_state, batch_actions, batch_reward, batch_next_state, batch_done
 
-    def load_new_buffer(self, suffixes: int = None):
+    def load_new_buffer(self, suffixes: int = None, use_splits: bool = False, max_suffix: int = 50):
         self.data = {}
         if not suffixes:
-            suffixes = np.random.randint(low=0, high=50, size=self.n_ckpts)
+            suffixes = np.random.randint(low=0, high=max_suffix, size=self.n_ckpts)
         for elem in ELEMS:
-            paths = [f'{self.buffer_path}{STORE_FILENAME_PREFIX}{elem}_ckpt.{suffix}.gz' for suffix in suffixes]
+            if use_splits:
+                paths = [f'{self.buffer_path}{STORE_FILENAME_PREFIX}{elem}_split_ckpt.{suffix}.gz' for suffix in suffixes]
+            else:
+                paths = [f'{self.buffer_path}{STORE_FILENAME_PREFIX}{elem}_ckpt.{suffix}.gz' for suffix in suffixes]
             files = (gzip.open(p, 'rb') for p in paths)
             self.data[elem] = [np.load(f) for f in files]
             [f.close() for f in files]

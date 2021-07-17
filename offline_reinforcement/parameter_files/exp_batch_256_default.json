@@ -2,10 +2,10 @@
 	"game": ["Breakout", "Name of the atari environment"],
 	"data_dir": ["data/Breakout/1/", "Path to the transition data"],
 	"epochs": [200, "Number of test evaluations. Every epoch there are <iterations> iterations"],
-	"iterations": [250000, "Number of iterations per epoch. Agent gets and trains one batch per epoch"],
+	"iterations": [31250, "#Number of iterations per epoch. Agent gets and trains one batch per epoch"],
 	"validation_runs": [5, "How many runs to make for test evaluation. Average over runs is returned"],
-	"iter_target_update": [2000, "Every <iter_target_update> iterations, the target net is updated"],
-        "iter_buffer_update": [250023, "Every <iter_buffer_update> iteraions, a new buffer is loaded from the transition data"],
+	"iter_target_update": [250, "#Every <iter_target_update> iterations, the target net is updated"],
+        "iter_buffer_update": [31251, "#Every <iter_buffer_update> iteraions, a new buffer is loaded from the transition data"],
         "adam_learning_rate": [0.00005, "Learning rate of ADAM optimizer"],
 	"adam_epsilon": [0.0003125, "Stabilization term of ADAM optimizer"],
         "model_num_heads": [200, "Number of heads of the REM"],
@@ -14,9 +14,9 @@
 	"agent_history": [4, "Number of states which are stacked as a multi-channel image in one go into the REM"],
 	"agent_total_steps": [125000, "Total steps per evaluation run of agent. If over this value no new episode is started."],
 	"agent_episode_max_steps": [27000, "Maximum steps per episode of agent, if not terminated before."],
-	"replay_batch_size": [32, "Batch size for training the agent with the transition data"],
+	"replay_batch_size": [256, "#Batch size for training the agent with the transition data"],
 	"env_sticky_actions": [true, "If sticky actions should be used in online validation"],
-	"agent_save_weights": [5, "Frequency (epochs) of saving the agent weights during traning"],
+	"agent_save_weights": [1, "Frequency (epochs) of saving the agent weights during traning"],
 	"fixed_checkpoint": [null, "Fixed checkpoint number to debug. Default is None for random checkpoint"],
-	"n_ckpts": [1, "Number of checkpoints loaded in replay buffer at once"]
+	"n_ckpts": [5, "Number of checkpoints loaded in replay buffer at once"]
 }
