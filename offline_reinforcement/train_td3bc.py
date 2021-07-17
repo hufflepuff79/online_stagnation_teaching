@@ -52,3 +52,9 @@ def train(params, log_wb: bool = False, logging_freq: int = 1000):
                                                       eps=params.adam_epsilon)
     critic_2_optimizer = optimizer = torch.optim.Adam(critic_2.parameters(), lr=params.adam_learning_rate,
                                                       eps=params.adam_epsilon)
+
+
+    # create the TD3+BC agent
+    agent = TDR3BC(actor, actor_target, critic_1, critic_1_target,critic_2, critic_2_target,
+                   actor_optimizer, critic_1_optimizer, critic_2_optimizer)
+
