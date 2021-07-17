@@ -57,15 +57,15 @@ class Actor(nn.Module):
     'A minimalist Approach to Offline Reinforcement Learning'
     by Fujimoto and Gu et.al"""
 
-    def __init__(self, in_features, out_features):
+    def __init__(self, in_features, out_features=1):
         self.lin1 = nn.Linear(in_features=in_features, out_features=256)
         self.lin2 = nn.Linear(in_features=256, out_features=256)
         self.lin3 = nn.Linear(in_features=256, out_features=out_features)
 
         self.relu = nn.ReLU()
 
-    def forward(self, x):
-        x = self.lin1(x)
+    def forward(self, state):
+        x = self.lin1(state)
         x = self.relu(x)
         x = self.lin2(x)
         x = self.relu(x)
@@ -78,14 +78,16 @@ class Critic(nn.Module):
     'A minimalist Approach to Offline Reinforcement Learning'
     by Fujimoto and Gu et.al"""
 
-    def __init__(self, in_features, out_features):
+    def __init__(self, in_features, out_features=1):
         self.lin1 = nn.Linear(in_features=in_features, out_features=256)
         self.lin2 = nn.Linear(in_features=256, out_features=256)
         self.lin3 = nn.Linear(in_features=256, out_features=out_features)
 
         self.relu = nn.ReLU()
 
-    def forward(self, x):
+    def forward(self, state, action):
+        # TODO: combine state action into a single tensor?
+        x = torch.cat((state,action))  # TODO: does this match with the dimensions?
         x = self.lin1(x)
         x = self.relu(x)
         x = self.lin2(x)
