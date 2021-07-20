@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from agent.networks import Actor, Critic
-from agent.replay_buffer import ReplayBuffer
+from agent.replay_buffer_d4rl import ReplayBufferD4RL
 import numpy as np
 import matplotlib.pyplot as plt
 import wandb
@@ -13,7 +13,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class TD3BC:
     def __init__(self, actor, actor_target, critic_1, critic_1_target,
                  critic_2, critic_2_target, actor_optimizer, critic_1_optimizer,
-                 critic_2_optimizer, tao):
+                 critic_2_optimizer, tau, env):
         self.actor = actor
         self.actor_target = actor_target
 
@@ -27,14 +27,13 @@ class TD3BC:
         self.critic_1_target.load_state_dict(self.critic_1_target.state_dict())
         self.critic_2_target.load_state_dict(self.critic_2_target.state_dict())
 
-        # TODO: replay buffer
-        self.replay_buffer = ReplayBuffer(data_dir, history=history, suffixes=suffixes, n_ckpts=n_ckpts)
+        self.replay_buffer = ReplayBufferD4RL(env)
 
         # TODO: parameters
         self.batch_size = batch_size
         self.epsilon = epsilon
         self.gamma = gamma
-        self.tao = tao
+        self.tau = tau
 
         # optimizer
         self.critic_1_optim = critic_1_optimizer
@@ -49,7 +48,6 @@ class TD3BC:
 
         self.set_net_status(eval=False)
 
-        # TODO: correct order etc. of buffer output?
         states, actions, rewards, next_states, done = self.replay_buffer.get_minibatch(self.batch_size)
 
         with torch.no_grad():
@@ -76,6 +74,12 @@ class TD3BC:
         loss_c2.backward()
         self.critic_2_optim.step()
 
+        if optim_actor:
+            self.actor_optim.zero_grad()
+            # TODO: find correct loss function
+            loss.backward()
+            self.actor_optim.step()
+
     def set_net_status(self, eval=True):
         """" Status of the networks set to train/eval"""
         if eval:
@@ -89,24 +93,15 @@ class TD3BC:
 
 
     def update_target_critic(self):
-        for layer, _ in self.critic_1.state_dict():
-            # TODO: check against car racing example
-            # apply a soft update to both critic target networks
-            self.critic_1_target.state_dict()[layer] = self.tao * self.critic_1_target.state_dict()[layer] + \
-                                                       (1-self.tao) * self.critic_1.state_dict()[layer]
-
-            self.critic_2_target.state_dict()[layer] = self.tao * self.critic_2_target.state_dict()[layer] + \
-                                                       (1 - self.tao) * self.critic_2.state_dict()[layer]
+        for target_param, param in zip(self.critic_1_target.parameters(), self.critic_1.parameters()):
+            target_param.data.copy_(target_param.data * (1.0 - self.tau) + param.data * self.tau)
+        for target_param, param in zip(self.critic_2_target.parameters(), self.critic_2.parameters()):
+            target_param.data.copy_(target_param.data * (1.0 - self.tau) + param.data * self.tau)
 
 
     def update_target_actor(self):
-        # TODO!!
-
-    def update_actor(self):
-        self.actor_optim.zero_grad()
-        # TODO: find correct loss function
-        loss.backward()
-        self.actor_optim.step()
+        for target_param, param in zip(self.actor_target.parameters(), self.actor.parameters()):
+            target_param.data.copy_(target_param.data * (1.0 - self.tau) + param.data * self.tau)
 
     def act(self, state):
         action = self.actor(state)
