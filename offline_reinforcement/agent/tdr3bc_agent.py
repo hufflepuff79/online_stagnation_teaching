@@ -74,7 +74,7 @@ class TD3BC:
         self.critic_2_optim.zero_grad()
         loss_c2 = self.critic_loss_func(Q_pred_2, td_targets)
         loss_c2.backward()
-        self.critic_1_optim.step()
+        self.critic_2_optim.step()
 
     def set_net_status(self, eval=True):
         """" Status of the networks set to train/eval"""
