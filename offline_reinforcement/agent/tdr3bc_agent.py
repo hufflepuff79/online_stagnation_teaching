@@ -89,7 +89,8 @@ class TD3BC:
 
 
     def update_target_critic(self):
-        for layer, _ in self.critic_1:
+        for layer, _ in self.critic_1.state_dict():
+            # TODO: check against car racing example
             # apply a soft update to both critic target networks
             self.critic_1_target.state_dict()[layer] = self.tao * self.critic_1_target.state_dict()[layer] + \
                                                        (1-self.tao) * self.critic_1.state_dict()[layer]
