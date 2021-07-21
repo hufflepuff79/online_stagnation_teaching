@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from agent.networks import Actor, Critic
 from agent.replay_buffer_d4rl import ReplayBufferD4RL
 import numpy as np
@@ -13,7 +14,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class TD3BC:
     def __init__(self, actor, actor_target, critic_1, critic_1_target,
                  critic_2, critic_2_target, actor_optimizer, critic_1_optimizer,
-                 critic_2_optimizer, tau, dataset, batch_size, epsilon, gamma):
+                 critic_2_optimizer, tau, dataset, batch_size, gamma, noise_std, noise_c
+                 min_action, max_action, alpha):
         self.actor = actor
         self.actor_target = actor_target
 
@@ -29,11 +31,15 @@ class TD3BC:
 
         self.replay_buffer = ReplayBufferD4RL(dataset)
 
-        # TODO: parameters
+        # parameters
         self.batch_size = batch_size
-        self.epsilon = epsilon
         self.gamma = gamma
         self.tau = tau
+        self.noise_std = noise_std
+        self.noise_c = noise_c
+        self.min_action = min_action
+        self.max_action = max_action
+        self.alpha = alpha
 
         # optimizer
         self.critic_1_optim = critic_1_optimizer
@@ -42,7 +48,6 @@ class TD3BC:
 
         # loss
         self.critic_loss_func = nn.MSELoss()
-        # TODO : self.actor_loss_func =
 
     def train_batch(self, optim_actor=False):
 
@@ -51,8 +56,10 @@ class TD3BC:
         states, actions, rewards, next_states, done = self.replay_buffer.get_minibatch(self.batch_size)
 
         with torch.no_grad():
-            next_actions = self.actor_target(next_states)
-            # TODO: apply noise to the next_actions based on a normal distribution with clipping to actions space range
+
+            noise = torch.clamp(torch.empty(batch_size).normal_(mean=0,std=self.noise_std), -self.noice_c, self.noise_c)
+            next_actions = torch.clamp(self.actor_target(next_states) + noise, self.min_action, self.max_action)
+
             Q_val_1 = self.critic_1_target(next_states, next_actions)
             Q_val_2 = self.critic_2_target(next_states, next_actions)
 
@@ -77,10 +84,11 @@ class TD3BC:
         if optim_actor:
             self.actor_optim.zero_grad()
             
-            # TODO: find correct loss function
+            # loss function
             pi = self.actor(states)
             Q_pred = self.critic_1(states, pi)
-            actor_loss = -Q_pred.mean()
+            l = self.alpha/Q_pred.abs().mean().detach()
+            actor_loss = - l * Q_pred.mean() + F.mse_loss(pi, actions)
             actor_loss.backward()
             self.actor_optim.step()
 
