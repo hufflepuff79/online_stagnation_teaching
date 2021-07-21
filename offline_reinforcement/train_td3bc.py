@@ -1,3 +1,4 @@
+import pickle
 import argparse
 from matplotlib.pyplot import step
 import torch
@@ -33,14 +34,24 @@ def train(params, log_wb: bool = False, logging_freq: int = 1000):
 
     # create the environment
     env = gym.make(params.env_name)
-    dataset = d4rl.qlearning_dataset(env)
+
+    # get the offline dataset
+    try:
+        with open(params.data_dir, 'r') as f:
+            dataset = pickle.load(f)
+    except:
+        dataset = d4rl.qlearning_dataset(env)
+
+
+    # create networks 
+    action_space = env.action_space.shape[0]
+    max_action = torch.from_numpy(env.action_space.high).to(device)
+    min_action = torch.from_numpy(env.action_space.low).to(device)
+    observation_space = env.observation_space.shape[0]
     env.close()
 
-    # create networks TODO: add the parameters for the networks
-    action_space = dataset['actions'].shape[1]
-    observation_space = dataset['observations'].shape[1]
-    actor = Actor(in_features=observation_space, out_features=action_space)
-    actor_target = Actor(in_features=observation_space, out_features=action_space)
+    actor = Actor(max_action=max_action, in_features=observation_space, out_features=action_space)
+    actor_target = Actor(max_action=max_action, in_features=observation_space, out_features=action_space)
 
     critic_1 = Critic(in_features=observation_space+action_space)
     critic_2 = Critic(in_features=observation_space+action_space)
@@ -54,7 +65,7 @@ def train(params, log_wb: bool = False, logging_freq: int = 1000):
     critic_1_target = critic_1_target.to(device)
     critic_2_target = critic_2_target.to(device)
 
-    # create optimizers #TODO: check parameters
+    # create optimizers 
     actor_optimizer = torch.optim.Adam(actor.parameters(), lr=params.actor_lr)
     critic_1_optimizer = optimizer = torch.optim.Adam(critic_1.parameters(), lr=params.critic_lr)
     critic_2_optimizer = optimizer = torch.optim.Adam(critic_2.parameters(), lr=params.critic_lr)
@@ -63,13 +74,15 @@ def train(params, log_wb: bool = False, logging_freq: int = 1000):
     # create the TD3+BC agent
     agent = TD3BC(actor, actor_target, critic_1, critic_1_target,critic_2, critic_2_target,
                    actor_optimizer, critic_1_optimizer, critic_2_optimizer, tau=params.tau,
-                   dataset=dataset, batch_size=params.mini_batch_size, epsilon=0, gamma=params.discount_factor)
+                   dataset=dataset, batch_size=params.mini_batch_size, gamma=params.discount_factor,
+                   noise_std=params.policy_noise, noise_c=params.policy_noise_clipping,
+                   min_action=min_action, max_action=max_action, alpha=params.tdc_bc_alpha, action_dim=action_space)
 
     # for logging
     sp = StatusPrinter()
     sp.add_counter("epoch", "Epochs", params.epochs, 0, bold=True)
     sp.add_bar("iter", "Iteration Progress", params.iterations)
-    # sp.add_bar("valid", "Validation Progress", params.agent_total_steps + params.agent_episode_max_steps)
+    sp.add_bar("valid", "Validation Progress", params.validation_runs * params.max_episode_steps)
 
     # initiate training
     print(f"\nStarting Training\nEpochs: {params.epochs}\nIterations per Epoch: {params.iterations}\n\n")
@@ -78,41 +91,24 @@ def train(params, log_wb: bool = False, logging_freq: int = 1000):
         sp.print_statement("iter")
         sp.reset_element("iter")
 
-        train_loss = 0
-
         for iteration in range(params.iterations):
-
-            # logging = False
-            # if iteration % logging_freq == 0 and log_wb:
-            #     logging = True
-
-            # loss, log_dict = agent.train_batch(logging)
-            # train_loss += loss
-
-            # if logging:
-            #     wandb.log({**log_dict, **{'epoch' : epoch}})
-
-            # if (iteration+1) % params.iter_target_update == 0:
-            #     agent.update_target()
-            
-
             agent.train_batch(optim_actor=iteration % params.policy_update_frequency)
-
-
             sp.increment_and_print("iter")
 
         sp.done_element("iter")
 
-        total_reward = online_validation(agent=agent, env_name=params.env_name, num_episodes=params.validation_runs)
-        print(total_reward)
-        # train_loss /= params.iterations
+        sp.print_statement("valid")
+        sp.reset_element("valid")
+        total_reward = online_validation(agent=agent, env_name=params.env_name, num_episodes=params.validation_runs, status_func=sp.increment_and_print,
+                                        status_arg="valid")
+        sp.done_element("valid")
       
-        # if log_wb:
-        #     wandb.log({'Training/Avg_Loss' : train_loss, 'epoch': epoch})
-        # print(f"Average Training Loss: {train_loss}")
+        print(total_reward)
+        if log_wb:
+            wandb.log({'Average Reward' : total_reward, 'epoch': epoch})
 
 
-def online_validation(agent, env_name, num_episodes=2, status_func=lambda *args :None, status_arg=None, render=False):
+def online_validation(agent, env_name, num_episodes=10, status_func=lambda *args :None, status_arg=None, render=False):
     env = gym.make(env_name)
 
     total_reward = 0
@@ -130,8 +126,9 @@ def online_validation(agent, env_name, num_episodes=2, status_func=lambda *args 
                 time.sleep(0.01)
 
             total_reward += reward
-            # status_func(status_arg)
+            status_func(status_arg)
     total_reward /= num_episodes
+    total_reward = env.get_normalized_score(total_reward)
 
     env.close()
     return total_reward
@@ -153,9 +150,10 @@ if __name__ == "__main__":
     parser.add_argument("--discount_factor", default=0.99, help="Discount factor")
     parser.add_argument("--target_update_rate", default=5e-3, help="Target update rate")
     parser.add_argument("--policy_noise", default=0.2, help="Noise term applied to the policy")
-    parser.add_argument("--policy_noise_clipping", default=[-0.5, 0.5], help="Noise clipping range")
+    parser.add_argument("--policy_noise_clipping", default=0.5, help="Noise clipping range")
     parser.add_argument("--policy_update_frequency", default=2, help="Frequency for the policy update")
-    parser.add_argument("--tdc+bc_alpha", default=2.5, help="hyperparameter alpha")
+    parser.add_argument("--tdc_bc_alpha", default=2.5, help="hyperparameter alpha")
+    parser.add_argument('--max_episode_steps', type=int, help='Maximum steps per episode of agent.')
     
     parser.add_argument('--cfg', type=str, help='path to json config file',
                         default='parameter_files/td3+bc_parameters.json')

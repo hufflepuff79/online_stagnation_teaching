@@ -14,8 +14,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class TD3BC:
     def __init__(self, actor, actor_target, critic_1, critic_1_target,
                  critic_2, critic_2_target, actor_optimizer, critic_1_optimizer,
-                 critic_2_optimizer, tau, dataset, batch_size, gamma, noise_std, noise_c
-                 min_action, max_action, alpha):
+                 critic_2_optimizer, tau, dataset, batch_size, gamma, noise_std, noise_c,
+                 min_action, max_action, alpha, action_dim):
         self.actor = actor
         self.actor_target = actor_target
 
@@ -39,6 +39,7 @@ class TD3BC:
         self.noise_c = noise_c
         self.min_action = min_action
         self.max_action = max_action
+        self.action_dim = action_dim
         self.alpha = alpha
 
         # optimizer
@@ -57,8 +58,8 @@ class TD3BC:
 
         with torch.no_grad():
 
-            noise = torch.clamp(torch.empty(batch_size).normal_(mean=0,std=self.noise_std), -self.noice_c, self.noise_c)
-            next_actions = torch.clamp(self.actor_target(next_states) + noise, self.min_action, self.max_action)
+            noise = torch.clamp(torch.empty(self.batch_size, self.action_dim).normal_(mean=0, std=self.noise_std), -self.noise_c, self.noise_c)
+            next_actions = torch.clamp(self.actor_target(next_states) + noise, self.min_action.detach().numpy()[0], self.max_action.detach().numpy()[0])
 
             Q_val_1 = self.critic_1_target(next_states, next_actions)
             Q_val_2 = self.critic_2_target(next_states, next_actions)

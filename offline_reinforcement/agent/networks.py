@@ -57,7 +57,7 @@ class Actor(nn.Module):
     'A minimalist Approach to Offline Reinforcement Learning'
     by Fujimoto and Gu et.al"""
 
-    def __init__(self, in_features, out_features=1):
+    def __init__(self, max_action, in_features, out_features=1):
         super(Actor, self).__init__()
         self.lin1 = nn.Linear(in_features=in_features, out_features=256)
         self.lin2 = nn.Linear(in_features=256, out_features=256)
@@ -65,14 +65,15 @@ class Actor(nn.Module):
 
         self.relu = nn.ReLU()
 
+        self.max_action = max_action
+
     def forward(self, state):
         x = self.lin1(state)
         x = self.relu(x)
         x = self.lin2(x)
         x = self.relu(x)
         x = self.lin3(x)
-        #TODO adapt the range using tanh like they did or other method?
-        return x
+        return self.max_action * torch.tanh(x)
 
 
 class Critic(nn.Module):
