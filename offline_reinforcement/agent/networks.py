@@ -58,6 +58,7 @@ class Actor(nn.Module):
     by Fujimoto and Gu et.al"""
 
     def __init__(self, in_features, out_features=1):
+        super(Actor, self).__init__()
         self.lin1 = nn.Linear(in_features=in_features, out_features=256)
         self.lin2 = nn.Linear(in_features=256, out_features=256)
         self.lin3 = nn.Linear(in_features=256, out_features=out_features)
@@ -70,6 +71,7 @@ class Actor(nn.Module):
         x = self.lin2(x)
         x = self.relu(x)
         x = self.lin3(x)
+        #TODO adapt the range using tanh like they did or other method?
         return x
 
 
@@ -79,6 +81,7 @@ class Critic(nn.Module):
     by Fujimoto and Gu et.al"""
 
     def __init__(self, in_features, out_features=1):
+        super(Critic, self).__init__()
         self.lin1 = nn.Linear(in_features=in_features, out_features=256)
         self.lin2 = nn.Linear(in_features=256, out_features=256)
         self.lin3 = nn.Linear(in_features=256, out_features=out_features)
@@ -87,7 +90,7 @@ class Critic(nn.Module):
 
     def forward(self, state, action):
         # TODO: combine state action into a single tensor?
-        x = torch.cat((state,action))  # TODO: does this match with the dimensions?
+        x = torch.cat((state,action), dim=1)  # TODO: does this match with the dimensions?
         x = self.lin1(x)
         x = self.relu(x)
         x = self.lin2(x)

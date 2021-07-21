@@ -7,11 +7,10 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class ReplayBufferD4RL():
 
-    def __init__(self, env) -> None:
-        self.data = d4rl.qlearning_dataset(env)
+    def __init__(self, dataset) -> None:
+        self.data = dataset
         self.observation_dim = self.data['observations'].shape[1]
         self.action_dim = self.data['actions'].shape[1]
-        print(sum(self.data['terminals']))
 
 
     def get_minibatch(self, batch_size: int = 32):

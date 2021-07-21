@@ -13,7 +13,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class TD3BC:
     def __init__(self, actor, actor_target, critic_1, critic_1_target,
                  critic_2, critic_2_target, actor_optimizer, critic_1_optimizer,
-                 critic_2_optimizer, tau, env):
+                 critic_2_optimizer, tau, dataset, batch_size, epsilon, gamma):
         self.actor = actor
         self.actor_target = actor_target
 
@@ -27,7 +27,7 @@ class TD3BC:
         self.critic_1_target.load_state_dict(self.critic_1_target.state_dict())
         self.critic_2_target.load_state_dict(self.critic_2_target.state_dict())
 
-        self.replay_buffer = ReplayBufferD4RL(env)
+        self.replay_buffer = ReplayBufferD4RL(dataset)
 
         # TODO: parameters
         self.batch_size = batch_size
@@ -76,9 +76,17 @@ class TD3BC:
 
         if optim_actor:
             self.actor_optim.zero_grad()
+            
             # TODO: find correct loss function
-            loss.backward()
+            pi = self.actor(states)
+            Q_pred = self.critic_1(states, pi)
+            actor_loss = -Q_pred.mean()
+            actor_loss.backward()
             self.actor_optim.step()
+
+            #update the models
+            self.update_target_actor()
+            self.update_target_critic()
 
     def set_net_status(self, eval=True):
         """" Status of the networks set to train/eval"""
@@ -105,7 +113,7 @@ class TD3BC:
 
     def act(self, state):
         action = self.actor(state)
-        return action
+        return action.detach().numpy()
 
     def save(self, file_path):
         #TODO: careful that the path contains the epoch name, otherwise will overwrite every save step
