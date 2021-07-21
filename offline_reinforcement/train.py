@@ -60,6 +60,9 @@ def train(params, log_wb: bool = False, logging_freq: int = 1000):
                      epsilon=params.agent_epsilon, gamma=params.agent_gamma,
                      history=params.agent_history, suffixes=params.fixed_checkpoint,
                      n_ckpts=params.n_ckpts)
+
+    if params.agent_state_dict:
+        agent.load(params.agent_state_dict)
     
     # for logging
     sp = StatusPrinter()
@@ -201,6 +204,7 @@ if __name__ == "__main__":
     parser.add_argument('--agent_history', type=int, help='Number of states which are stacked as a multi-channel image in one go into the REM')
     parser.add_argument('--agent_total_steps', type=int, help='Total steps per evaluation run of agent. If over this value no new episode is started.')
     parser.add_argument('--agent_episode_max_steps', type=int, help='Maximum steps per episode of agent, if not terminated before.')
+    parser.add_argument('--agent_state_dict', type=str, help='Path to the saved weights of an agent.')
     parser.add_argument('--replay_batch_size', type=int, help='Batch size for training the agent with the transition data')
     parser.add_argument('--env_sticky_actions', type=bool, help='If sticky actions should be used in online validation')
     parser.add_argument("--agent_save_weights", type=int, help="Frequency at which the weights of network are saved")

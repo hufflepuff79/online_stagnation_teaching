@@ -112,6 +112,10 @@ class REMAgent:
     def save(self, file_name):
         torch.save(self.Q.state_dict(), file_name)
 
+    def load(self, file_name):
+        self.Q.load_state_dict(torch.load(file_name))
+        self.Q_target.load_state_dict(torch.load(file_name))
+
 
 class StateBuffer:
 
