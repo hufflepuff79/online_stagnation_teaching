@@ -1,3 +1,4 @@
+import pickle
 import argparse
 from matplotlib.pyplot import step
 import torch
@@ -6,14 +7,7 @@ from agent.tdr3bc_agent import TD3BC
 from agent.networks import Actor, Critic
 import torch.nn as nn
 import numpy as np
-from dm_control import suite
 import time
-
-if args.env == 'dm_control':
-    import d4rl
-elif args.env == 'gym':
-    import gym
-
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -21,24 +15,32 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def test(params, path, epoch, environment):
 
+    if environment == 'dm_control':
+        from dm_control import suite
+        from dm_control import viewer
+    elif environment == 'gym':
+        import gym
+
 
     # get environment info
     # TODO: More flexibel and probably split up the training in two files one for d4rl and one for unplugged
-    if environment == 'dm_control':
-        env = gym.make(params.env_name)
+    if environment == 'gym':
+        env = gym.make('HalfCheetah-v2')
         action_space = env.action_space.shape[0]
         max_action = torch.from_numpy(env.action_space.high).to(device)
         min_action = torch.from_numpy(env.action_space.low).to(device)
         observation_space = env.observation_space.shape[0]
         env.close()
     
-    elif environment == 'gym':
+    elif environment == 'dm_control':
         env = suite.load('cheetah', 'run')
         action_space = env.action_spec().shape[0]
         max_action = torch.from_numpy(env.action_spec().maximum.astype(np.float32)).to(device)
         min_action = torch.from_numpy(env.action_spec().minimum.astype(np.float32)).to(device)
         observation_space = 17
         env.close()
+        with open(params.data_dir, 'rb') as f:
+            dataset = pickle.load(f)
 
     # create networks 
     actor = Actor(max_action=max_action, in_features=observation_space, out_features=action_space)
@@ -71,18 +73,9 @@ def test(params, path, epoch, environment):
 
     agent.load(path, epoch)
 
-    if environment == "dm_control":
-        env = gym.make(env_name)
+    if environment == "gym":
+        env = gym.make(params.env_name)
         state = env.reset()
-        state = (state-agent.replay_buffer.mean)/agent.replay_buffer.std
-        state = torch.from_numpy(state).float()
-        viewer.launch(env, policy=agent.render_policy)
-
-    elif environment == "gym":
-        env = suite.load('cheetah', 'run')
-        unplugged_rl_step_count = 0
-        time_step = env.reset()
-        state = np.concatenate((time_step.observation['position'], time_step.observation['velocity']))
         state = (state-agent.replay_buffer.mean)/agent.replay_buffer.std
         state = torch.from_numpy(state).float()
 
@@ -94,6 +87,16 @@ def test(params, path, epoch, environment):
             state = torch.from_numpy(state).float()
             env.render()
             time.sleep(0.01)
+
+    elif environment == "dm_control":
+        env = suite.load('cheetah', 'run')
+        unplugged_rl_step_count = 0
+        time_step = env.reset()
+        state = np.concatenate((time_step.observation['position'], time_step.observation['velocity']))
+        state = (state-agent.replay_buffer.mean)/agent.replay_buffer.std
+        state = torch.from_numpy(state).float()
+        viewer.launch(env, policy=agent.render_policy)
+
     env.close()
 
     return 
@@ -134,4 +137,4 @@ if __name__ == "__main__":
     
     params.fix()
 
-    test(params, args.path, args.epoch, args.environment)
+    test(params, args.path, args.epoch, args.env)

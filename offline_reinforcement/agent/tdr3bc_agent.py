@@ -1,3 +1,4 @@
+import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -108,6 +109,12 @@ class TD3BC:
             self.critic_1.train()
             self.critic_2.train()
 
+    def render_policy(self, time_step):
+        state = np.concatenate((time_step.observation['position'], time_step.observation['velocity']))
+        state = (state-self.replay_buffer.mean)/self.replay_buffer.std
+        state = torch.from_numpy(state).float()
+        return self.act(state)
+
 
     def update_target_critic(self):
         for target_param, param in zip(self.critic_1_target.parameters(), self.critic_1.parameters()):
@@ -130,7 +137,7 @@ class TD3BC:
         torch.save(self.critic_2.state_dict(), join(file_path, f"critic_2_epoch_{epoch}.pth"))
         torch.save(self.actor.state_dict(), join(file_path, f"actor_epoch_{epoch}.pth"))
 
-    def load(self, folder_path, epoch):
-        self.critic_1.load_state_dict(torch.load(os.path.join(file_path, "critic_1_epoch_{epoch}.pth")))
-        self.critic_2.load_state_dict(torch.load(os.path.join(file_path, "critic_2_epoch_{epoch}.pth")))
-        self.actor.load_state_dict(torch.load(os.path.join(file_path, "actor_epoch_{epoch}.pth")))
+    def load(self, file_path, epoch):
+        self.critic_1.load_state_dict(torch.load(os.path.join(file_path, f"critic_1_epoch_{epoch}.pth")))
+        self.critic_2.load_state_dict(torch.load(os.path.join(file_path, f"critic_2_epoch_{epoch}.pth")))
+        self.actor.load_state_dict(torch.load(os.path.join(file_path, f"actor_epoch_{epoch}.pth")))
