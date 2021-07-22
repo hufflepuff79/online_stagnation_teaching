@@ -32,10 +32,10 @@ class ReplayBuffer():
         rand_indicies = np.random.choice(len(self.data['action'][0]) - (self.history + 1), size=batch_size, replace=False)
         for idx, (rnd_idx, data_index) in enumerate(zip(rand_indicies, data_indicies)):
             batch_state[idx, :, :, :] = torch.from_numpy(self.data['observation'][data_index][rnd_idx:rnd_idx+self.history, :, :])
-            batch_next_state[idx, :, :, :] = torch.from_numpy(self.data['observation'][data_index][rnd_idx+1:rnd_idx+self.history+1, :, :])
-            batch_actions[idx, :] = self.data['action'][data_index][rnd_idx + self.history]
-            batch_reward[idx, :] = torch.from_numpy(np.asarray(self.data['reward'][data_index][rnd_idx+self.history]))
-            batch_done[idx, :] = self.data['terminal'][data_index][rnd_idx+self.history]
+            batch_next_state[idx, :, :, :] = torch.from_numpy(self.data['observation'][data_index][rnd_idx + 1:rnd_idx+self.history + 1, :, :])
+            batch_actions[idx, :] = self.data['action'][data_index][rnd_idx + self.history - 1]
+            batch_reward[idx, :] = torch.from_numpy(np.asarray(self.data['reward'][data_index][rnd_idx+self.history - 1]))
+            batch_done[idx, :] = self.data['terminal'][data_index][rnd_idx + self.history - 1]
 
         return batch_state, batch_actions, batch_reward, batch_next_state, batch_done
 
@@ -51,20 +51,3 @@ class ReplayBuffer():
             files = (gzip.open(p, 'rb') for p in paths)
             self.data[elem] = [np.load(f) for f in files]
             [f.close() for f in files]
-
-
-    def get_static_minibatch(self, batch_size: int = 32):
-        batch_state = torch.empty(batch_size, self.history, 84, 84, dtype=torch.float32)
-        batch_next_state = torch.empty(batch_size, self.history, 84, 84, dtype=torch.float32)
-        batch_actions = torch.empty(batch_size, 1, dtype=torch.long)
-        batch_reward = torch.empty(batch_size, 1, dtype=torch.float32)
-        batch_done = torch.empty(batch_size, 1, dtype=torch.int)
-        data_index = np.random.choice(self.n_ckpts)
-        for index, rand_index in enumerate(range(batch_size)):
-            batch_state[index, :, :, :] = torch.from_numpy(self.data['observation'][data_index][rand_index: rand_index + self.history, :, :])
-            batch_next_state[index, :, :, :] = torch.from_numpy(self.data['observation'][data_index][rand_index + 1: rand_index + self.history + 1, :, :])
-            batch_actions[index, :] = self.data['action'][data_index][rand_index + self.history]
-            batch_reward[index, :] = torch.from_numpy(np.asarray(self.data['reward'][data_index][rand_index + self.history]))
-            batch_done[index, :] = self.data['terminal'][data_index][rand_index + self.history]
-
-        return batch_state, batch_actions, batch_reward, batch_next_state, batch_done
