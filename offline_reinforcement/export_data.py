@@ -17,11 +17,11 @@ def export_and_save_data(dir_in, dir_out, datapoints = None):
         for e in raw_dataset:
             datapoints += 1
 
-    data = {'observations' : np.zeros((datapoints, 17), dtype=np.float32),
-            'next_observations' : np.zeros((datapoints, 17), dtype=np.float32),
-            'rewards' : np.zeros(datapoints, dtype=np.float32),
-            'actions' : np.zeros((datapoints, 6), dtype=np.float32),
-            'terminals' : np.zeros(datapoints, dtype=bool)}
+    data = {'observations' : np.zeros((datapoints, 17)),
+            'next_observations' : np.zeros((datapoints, 17)),
+            'rewards' : np.zeros(datapoints),
+            'actions' : np.zeros((datapoints, 6)),
+            'terminals' : np.zeros(datapoints)}
 
     c = 0
     for raw_record in raw_dataset:
