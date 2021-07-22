@@ -129,3 +129,8 @@ class TD3BC:
         torch.save(self.critic_1.state_dict(), join(file_path, f"critic_1_epoch_{epoch}.pth"))
         torch.save(self.critic_2.state_dict(), join(file_path, f"critic_2_epoch_{epoch}.pth"))
         torch.save(self.actor.state_dict(), join(file_path, f"actor_epoch_{epoch}.pth"))
+
+    def load(self, folder_path, epoch):
+        self.critic_1.load_state_dict(torch.load(os.path.join(file_path, "critic_1_epoch_{epoch}.pth")))
+        self.critic_2.load_state_dict(torch.load(os.path.join(file_path, "critic_2_epoch_{epoch}.pth")))
+        self.actor.load_state_dict(torch.load(os.path.join(file_path, "actor_epoch_{epoch}.pth")))
