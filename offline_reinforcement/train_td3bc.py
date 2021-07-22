@@ -11,9 +11,9 @@ import numpy as np
 from os.path import exists, join
 from os import makedirs
 import wandb
-import d4rl
-import gym
-
+# import d4rl
+# import gym
+from dm_control import suite
 
 import time
 
@@ -33,23 +33,36 @@ def train(params, log_wb: bool = False, logging_freq: int = 1000):
         makedirs(log_dir)
 
     # create the environment
-    env = gym.make(params.env_name)
 
-    # get the offline dataset
+    # get the offline dataset if data-dir is given we use the pickle and unplugged rl
+    # else its d4rl
+    using_d4rl = False
     try:
-        with open(params.data_dir, 'r') as f:
+        with open(params.data_dir, 'rb') as f:
             dataset = pickle.load(f)
     except:
+        using_d4rl = True
         dataset = d4rl.qlearning_dataset(env)
 
 
-    # create networks 
-    action_space = env.action_space.shape[0]
-    max_action = torch.from_numpy(env.action_space.high).to(device)
-    min_action = torch.from_numpy(env.action_space.low).to(device)
-    observation_space = env.observation_space.shape[0]
-    env.close()
+    # get environment info
+    # TODO: More flexibel and probably split up the training in two files one for d4rl and one for unplugged
+    if using_d4rl:
+        env = gym.make(params.env_name)
+        action_space = env.action_space.shape[0]
+        max_action = torch.from_numpy(env.action_space.high).to(device)
+        min_action = torch.from_numpy(env.action_space.low).to(device)
+        observation_space = env.observation_space.shape[0]
+        env.close()
+    else:
+        env = suite.load('cheetah', 'run')
+        action_space = env.action_spec().shape[0]
+        max_action = torch.from_numpy(env.action_spec().maximum.astype(np.float32)).to(device)
+        min_action = torch.from_numpy(env.action_spec().minimum.astype(np.float32)).to(device)
+        observation_space = 17
+        env.close()
 
+    # create networks 
     actor = Actor(max_action=max_action, in_features=observation_space, out_features=action_space)
     actor_target = Actor(max_action=max_action, in_features=observation_space, out_features=action_space)
 
@@ -100,35 +113,61 @@ def train(params, log_wb: bool = False, logging_freq: int = 1000):
         sp.print_statement("valid")
         sp.reset_element("valid")
         total_reward = online_validation(agent=agent, env_name=params.env_name, num_episodes=params.validation_runs, status_func=sp.increment_and_print,
-                                        status_arg="valid")
+                                        status_arg="valid", using_d4rl=using_d4rl)
         sp.done_element("valid")
       
         print(total_reward)
         if log_wb:
             wandb.log({'Average Reward' : total_reward, 'epoch': epoch})
 
+        # save weights at regular intervals
+        if epoch % params.agent_save_weights == 0:
+            agent.save(log_dir, epoch)
 
-def online_validation(agent, env_name, num_episodes=10, status_func=lambda *args :None, status_arg=None, render=False):
-    env = gym.make(env_name)
+
+def online_validation(agent, env_name, num_episodes=10, status_func=lambda *args :None, status_arg=None, render=False, using_d4rl=True):
+    if using_d4rl:
+        env = gym.make(env_name)
+    else:
+        env = suite.load('cheetah', 'run')
 
     total_reward = 0
     for _ in range(num_episodes):
         done = False
-        state = env.reset()
-        state = torch.from_numpy(state).float()
+        if using_d4rl:
+            state = env.reset()
+            state = (state-agent.replay_buffer.mean)/agent.replay_buffer.std
+            state = torch.from_numpy(state).float()
+        else:
+            unplugged_rl_step_count = 0
+            time_step = env.reset()
+            state = np.concatenate((time_step.observation['position'], time_step.observation['velocity']))
+            state = (state-agent.replay_buffer.mean)/agent.replay_buffer.std
+            state = torch.from_numpy(state).float()
 
         while not done:
             action = agent.act(state)
-            state, reward, done, _ = env.step(action)
-            state = torch.from_numpy(state).float()
-            if render:
-                env.render()
-                time.sleep(0.01)
-
+            if using_d4rl:
+                state, reward, done, _ = env.step(action)
+                state = (state-agent.replay_buffer.mean)/agent.replay_buffer.std
+                state = torch.from_numpy(state).float()
+                if render:
+                    env.render()
+                    time.sleep(0.01)
+            else:
+                time_step = env.step(action)
+                state = np.concatenate((time_step.observation['position'], time_step.observation['velocity']))
+                state = (state-agent.replay_buffer.mean)/agent.replay_buffer.std
+                state = torch.from_numpy(state).float()
+                reward = time_step.reward
+                unplugged_rl_step_count += 1
+                if unplugged_rl_step_count >= 1000:
+                    done = True
             total_reward += reward
             status_func(status_arg)
     total_reward /= num_episodes
-    total_reward = env.get_normalized_score(total_reward)
+    if using_d4rl:
+        total_reward = env.get_normalized_score(total_reward)
 
     env.close()
     return total_reward
@@ -144,8 +183,8 @@ if __name__ == "__main__":
     parser.add_argument('--adam_learning_rate', type=float, help='Learning rate of ADAM optimizer')
     parser.add_argument("--agent_save_weights", type=int, help="Frequency at which the weights of network are saved")
     parser.add_argument("--wandb", action='store_true', help="Log with wandb")
-    parser.add_argument("--critic_lr", default=3e-4, help='Learning rate of the critic')
-    parser.add_argument("--actor_lr", default=3e-4, help='Learning rate of the actor')
+    parser.add_argument("--critic_lr", type=float, default=3e-4, help='Learning rate of the critic')
+    parser.add_argument("--actor_lr", type=float, default=3e-4, help='Learning rate of the actor')
     parser.add_argument("--mini_batch_size", default=256, help="Mini batch size")
     parser.add_argument("--discount_factor", default=0.99, help="Discount factor")
     parser.add_argument("--target_update_rate", default=5e-3, help="Target update rate")

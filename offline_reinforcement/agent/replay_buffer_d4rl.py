@@ -1,4 +1,3 @@
-import d4rl
 import torch
 import numpy as np
 
@@ -11,7 +10,10 @@ class ReplayBufferD4RL():
         self.data = dataset
         self.observation_dim = self.data['observations'].shape[1]
         self.action_dim = self.data['actions'].shape[1]
-
+        self.mean = self.data['observations'].mean(axis=0, keepdims=True)
+        self.std = self.data['observations'].std(axis=0, keepdims=True)
+        self.data['observations'] = (self.data['observations'] - self.mean) / self.std
+        self.data['next_observations'] = (self.data['next_observations'] - self.mean) / self.std
 
     def get_minibatch(self, batch_size: int = 32):
         batch_state = torch.empty(batch_size, self.observation_dim, dtype=torch.float32).to(device)
