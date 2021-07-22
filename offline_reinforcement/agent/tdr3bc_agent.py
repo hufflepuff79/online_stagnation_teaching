@@ -124,8 +124,8 @@ class TD3BC:
         action = self.actor(state)
         return action.detach().numpy()
 
-    def save(self, file_path):
+    def save(self, file_path, epoch):
         #TODO: careful that the path contains the epoch name, otherwise will overwrite every save step
-        torch.save(self.critic_1.state_dict(), join(file_path, "critic_1.pth"))
-        torch.save(self.critic_2.state_dict(), join(file_path, "critic_2.pth"))
-        torch.save(self.actor.state_dict(), join(file_path, "actor.pth"))
+        torch.save(self.critic_1.state_dict(), join(file_path, f"critic_1_epoch_{epoch}.pth"))
+        torch.save(self.critic_2.state_dict(), join(file_path, f"critic_2_epoch_{epoch}.pth"))
+        torch.save(self.actor.state_dict(), join(file_path, f"actor_epoch_{epoch}.pth"))
