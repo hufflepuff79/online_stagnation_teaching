@@ -1,0 +1,16 @@
+{
+	"optimizer": ["adam", " "],
+	"critic_lr": [3e-4, " "],
+	"actor_lr": [3e-4, " "],
+	"mini_batch_size": [256, " "],
+	"discount_factor": [0.99, " "],
+	"target_update_rate": [5e-3, " "],
+	"policy_noise": [0.2, " "],
+	"policy_noise_clipping": [0.5, " "],
+	"policy_update_frequency": [2, " "],
+	"tdc_bc_alpha": [2.5, " "],
+    "tau" : [0.005, " "],
+    "epochs": [2000, ""],
+    "iterations": [500, ""],
+    "max_episode_steps": [1000, ""]
+}
