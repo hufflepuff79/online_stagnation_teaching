@@ -20,16 +20,18 @@ def test(params, path, epoch, environment):
         from dm_control import viewer
     elif environment == 'gym':
         import gym
+        import d4rl
 
 
     # get environment info
     # TODO: More flexibel and probably split up the training in two files one for d4rl and one for unplugged
     if environment == 'gym':
-        env = gym.make('HalfCheetah-v2')
+        env = gym.make('halfcheetah-expert-v2')
         action_space = env.action_space.shape[0]
         max_action = torch.from_numpy(env.action_space.high).to(device)
         min_action = torch.from_numpy(env.action_space.low).to(device)
         observation_space = env.observation_space.shape[0]
+        dataset = d4rl.qlearning_dataset(env)
         env.close()
     
     elif environment == 'dm_control':
@@ -39,8 +41,8 @@ def test(params, path, epoch, environment):
         min_action = torch.from_numpy(env.action_spec().minimum.astype(np.float32)).to(device)
         observation_space = 17
         env.close()
-        with open(params.data_dir, 'rb') as f:
-            dataset = pickle.load(f)
+    # with open(params.data_dir, 'rb') as f:
+    #     dataset = pickle.load(f)
 
     # create networks 
     actor = Actor(max_action=max_action, in_features=observation_space, out_features=action_space)
@@ -73,21 +75,35 @@ def test(params, path, epoch, environment):
 
     agent.load(path, epoch)
 
+    # IF YOU WANT TO USE THIS YOU HAVE TO DEACTIVATE FRAME SKIPPING IN gym/envs/mujoco/half_cheetah.py
+    # AND ADD THE DM_CONTROL_SUITE
     if environment == "gym":
-        env = gym.make(params.env_name)
+        env = gym.make('HalfCheetah-v2')
         state = env.reset()
         state = (state-agent.replay_buffer.mean)/agent.replay_buffer.std
         state = torch.from_numpy(state).float()
 
-        done = False
-        while not done:
-            action = agent.act(state)
-            state, reward, done, _ = env.step(action)
+        total_reward = 0
+        for i in range(10):
+            state = env.reset()
             state = (state-agent.replay_buffer.mean)/agent.replay_buffer.std
             state = torch.from_numpy(state).float()
-            env.render()
-            time.sleep(0.01)
-
+            done = False
+            episode_reward = 0
+            while not done:
+                action = agent.act(state)
+                state, reward, done, _ = env.step(action)
+                state = (state-agent.replay_buffer.mean)/agent.replay_buffer.std
+                state = torch.from_numpy(state).float()
+                env.render()
+                time.sleep(0.05)
+                episode_reward += reward
+            rnd_score = -280.178953
+            expert_score = 12135
+            episode_reward = (episode_reward - rnd_score)/(expert_score - rnd_score)
+            total_reward += episode_reward
+            print(episode_reward)
+        print(total_reward/10)
     elif environment == "dm_control":
         env = suite.load('cheetah', 'run')
         unplugged_rl_step_count = 0
@@ -137,4 +153,7 @@ if __name__ == "__main__":
     
     params.fix()
 
+    # for i in range(10, int(args.epoch), 10):
+    #     test(params, args.path, i, args.env)
     test(params, args.path, args.epoch, args.env)
+

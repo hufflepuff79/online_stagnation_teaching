@@ -42,13 +42,13 @@ def train(params, log_wb: bool = False, logging_freq: int = 1000):
             dataset = pickle.load(f)
     except:
         using_d4rl = True
+        env = gym.make(params.env_name)
         dataset = d4rl.qlearning_dataset(env)
 
 
     # get environment info
     # TODO: More flexibel and probably split up the training in two files one for d4rl and one for unplugged
     if using_d4rl:
-        env = gym.make(params.env_name)
         action_space = env.action_space.shape[0]
         max_action = torch.from_numpy(env.action_space.high).to(device)
         min_action = torch.from_numpy(env.action_space.low).to(device)
