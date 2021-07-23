@@ -2,7 +2,7 @@ import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from agent.networks import Actor, Critic
+from agent.networks import Actor, Critic, CriticREM
 from agent.replay_buffer_d4rl import ReplayBufferD4RL
 import numpy as np
 import matplotlib.pyplot as plt
@@ -57,20 +57,44 @@ class TD3BC:
 
         states, actions, rewards, next_states, done = self.replay_buffer.get_minibatch(self.batch_size)
 
+       
         with torch.no_grad():
 
             noise = torch.clamp(torch.empty(self.batch_size, self.action_dim).normal_(mean=0, std=self.noise_std), -self.noise_c, self.noise_c)
             next_actions = torch.clamp(self.actor_target(next_states) + noise, self.min_action.detach().numpy()[0], self.max_action.detach().numpy()[0])
 
-            Q_val_1 = self.critic_1_target(next_states, next_actions)
-            Q_val_2 = self.critic_2_target(next_states, next_actions)
+            if isinstance(self.critic1, CriticREM):
+            
+                # random weights
+                alphas1 = np.random.uniform(low=0, high=1, size=self.critic1.num_heads)
+                alphas1 = alphas1/np.sum(alphas)
+                alphas2 = np.random.uniform(low=0, high=1, size=self.critic1.num_heads)
+                alphas2 = alphas2/np.sum(alphas)
+ 
+                Q_val_1 = self.critic_1_target(next_states, next_actions, alphas1)
+                Q_val_2 = self.critic_2_target(next_states, next_actions, alphas2)
 
-            # TODO: is using torch.minimum correct here? this will take the min between the two elements
-            # TODO: for each element pair of the two tensors, and also look at done shape/vals
+
+            else:
+                
+                Q_val_1 = self.critic_1_target(next_states, next_actions)
+                Q_val_2 = self.critic_2_target(next_states, next_actions)
+
+
             td_targets = rewards + self.gamma * torch.minimum(Q_val_1, Q_val_2) * (1.0 - done)
 
-        Q_pred_1 = self.critic_1(states, actions)
-        Q_pred_2 = self.critic_2(states, actions)
+
+        if isinstance(self.critic1, CriticREM):
+
+            Q_pred_1 = self.critic_1(states, actions, alphas1)
+            Q_pred_2 = self.critic_2(states, actions, alphas2)
+
+        else:
+            
+            Q_pred_1 = self.critic_1(states, actions)
+            Q_pred_2 = self.critic_2(states, actions)
+
+
 
         # optimize critic networks
         self.critic_1_optim.zero_grad()
