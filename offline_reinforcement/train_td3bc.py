@@ -135,7 +135,7 @@ def train(params, seed: int = 42, log_wb: bool = False, logging_freq: int = 1000
 
         sp.print_statement("valid")
         sp.reset_element("valid")
-        total_reward = online_validation(agent=agent, env_name=params.env_name, env_type=params.env_type, num_episodes=params.validation_runs, status_func=sp.increment_and_print,
+        total_reward = online_validation(agent=agent, env_name=params.env_name, env_type=params.env_type, seed=seed, num_episodes=params.validation_runs, status_func=sp.increment_and_print,
                                         status_arg="valid")
         sp.done_element("valid")
       
@@ -148,15 +148,15 @@ def train(params, seed: int = 42, log_wb: bool = False, logging_freq: int = 1000
             agent.save(log_dir, epoch)
 
 
-def online_validation(agent, env_name, env_type, num_episodes=10, status_func=lambda *args :None, status_arg=None, render=False):
+def online_validation(agent, env_name, env_type, seed=42, num_episodes=10, status_func=lambda *args :None, status_arg=None, render=False):
     if env_type == 'dm_control':
         # Import correct libs
         from dm_control import suite, viewer
         # get the envirionment infos
         if env_name == 'cheetah':
-            env = suite.load('cheetah', 'run')
+            env = suite.load('cheetah', 'run', task_kwargs={'random' : seed})
         elif env_name == 'human':
-            env = suite.load('human', 'run')
+            env = suite.load('human', 'run', task_kwargs={'random' : seed})
         else:
             print('Unsupported env_name for gym envirionment. Use cheetah or human')
             return
@@ -165,6 +165,8 @@ def online_validation(agent, env_name, env_type, num_episodes=10, status_func=la
         import gym
         if env_name == 'cheetah':
             env = gym.make('halfcheetah-expert-v2')
+            env.seed(seed)
+            env.action_space.seed(seed)
         else:
             print('Unsupported env_name for gym envirionment. Use cheetah')
             return
