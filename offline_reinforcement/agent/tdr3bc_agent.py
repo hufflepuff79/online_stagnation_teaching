@@ -63,13 +63,13 @@ class TD3BC:
             noise = torch.clamp(torch.empty(self.batch_size, self.action_dim).normal_(mean=0, std=self.noise_std), -self.noise_c, self.noise_c)
             next_actions = torch.clamp(self.actor_target(next_states) + noise, self.min_action.detach().numpy()[0], self.max_action.detach().numpy()[0])
 
-            if isinstance(self.critic1, CriticREM):
+            if isinstance(self.critic_1, CriticREM):
             
                 # random weights
-                alphas1 = np.random.uniform(low=0, high=1, size=self.critic1.num_heads)
-                alphas1 = alphas1/np.sum(alphas)
-                alphas2 = np.random.uniform(low=0, high=1, size=self.critic1.num_heads)
-                alphas2 = alphas2/np.sum(alphas)
+                alphas1 = np.random.uniform(low=0, high=1, size=self.critic_1.num_heads)
+                alphas1 = alphas1/np.sum(alphas1)
+                alphas2 = np.random.uniform(low=0, high=1, size=self.critic_1.num_heads)
+                alphas2 = alphas2/np.sum(alphas2)
  
                 Q_val_1 = self.critic_1_target(next_states, next_actions, alphas1)
                 Q_val_2 = self.critic_2_target(next_states, next_actions, alphas2)
@@ -84,7 +84,7 @@ class TD3BC:
             td_targets = rewards + self.gamma * torch.minimum(Q_val_1, Q_val_2) * (1.0 - done)
 
 
-        if isinstance(self.critic1, CriticREM):
+        if isinstance(self.critic_1, CriticREM):
 
             Q_pred_1 = self.critic_1(states, actions, alphas1)
             Q_pred_2 = self.critic_2(states, actions, alphas2)
@@ -112,7 +112,11 @@ class TD3BC:
             
             # loss function
             pi = self.actor(states)
-            Q_pred = self.critic_1(states, pi)
+            if isinstance(self.critic_1, CriticREM):
+                alphas = np.full(shape=self.critic_1.num_heads, fill_value=1/self.critic_1.num_heads)
+                Q_pred = self.critic_1(states, pi, alphas)
+            else:
+                Q_pred = self.critic_1(states, pi)
             l = self.alpha/Q_pred.abs().mean().detach()
             actor_loss = - l * Q_pred.mean() + F.mse_loss(pi, actions)
             actor_loss.backward()

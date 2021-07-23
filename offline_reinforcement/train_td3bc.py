@@ -5,15 +5,15 @@ import torch
 from utils import StatusPrinter, Parameters
 from torch.utils.tensorboard import SummaryWriter
 from agent.tdr3bc_agent import TD3BC
-from agent.networks import Actor, Critic
+from agent.networks import Actor, Critic, CriticREM
 import torch.nn as nn
 import numpy as np
 from os.path import exists, join
 from os import makedirs
 import wandb
-# import d4rl
-# import gym
-from dm_control import suite
+import d4rl
+import gym
+# from dm_control import suite
 
 import time
 
@@ -26,6 +26,8 @@ def train(params, log_wb: bool = False, logging_freq: int = 1000):
     # create wandb for logging stats
     if log_wb:
         wandb.init(entity="online_stagnation_teaching", config=params.as_dict())
+        if params.wandb_name:
+            wandb.run.name = params.wandb_name
 
     # directory to log agent parameters
     log_dir = join("train_stats", wandb.run.name if log_wb else str(int(time.time())))
@@ -63,20 +65,20 @@ def train(params, log_wb: bool = False, logging_freq: int = 1000):
         env.close()
 
     # create networks 
-    actor = Actor(max_action=max_action, in_features=observation_space, out_features=action_space)
-    actor_target = Actor(max_action=max_action, in_features=observation_space, out_features=action_space)
+    actor = Actor(max_action=max_action, in_features=observation_space, out_features=action_space).to(device)
+    actor_target = Actor(max_action=max_action, in_features=observation_space, out_features=action_space).to(device)
 
-    critic_1 = Critic(in_features=observation_space+action_space)
-    critic_2 = Critic(in_features=observation_space+action_space)
-    critic_1_target = Critic(in_features=observation_space+action_space)
-    critic_2_target = Critic(in_features=observation_space+action_space)
-
-    actor = actor.to(device)
-    actor_target = actor_target.to(device)
-    critic_1 = critic_1.to(device)
-    critic_2 = critic_2.to(device)
-    critic_1_target = critic_1_target.to(device)
-    critic_2_target = critic_2_target.to(device)
+    if params.use_rem:
+        print("USING REM")
+        critic_1 = CriticREM(in_features=observation_space+action_space).to(device)
+        critic_2 = CriticREM(in_features=observation_space+action_space).to(device)
+        critic_1_target = CriticREM(in_features=observation_space+action_space).to(device)
+        critic_2_target = CriticREM(in_features=observation_space+action_space).to(device)
+    else:
+        critic_1 = Critic(in_features=observation_space+action_space).to(device)
+        critic_2 = Critic(in_features=observation_space+action_space).to(device)
+        critic_1_target = Critic(in_features=observation_space+action_space).to(device)
+        critic_2_target = Critic(in_features=observation_space+action_space).to(device)
 
     # create optimizers 
     actor_optimizer = torch.optim.Adam(actor.parameters(), lr=params.actor_lr)
@@ -183,6 +185,7 @@ if __name__ == "__main__":
     parser.add_argument('--adam_learning_rate', type=float, help='Learning rate of ADAM optimizer')
     parser.add_argument("--agent_save_weights", type=int, help="Frequency at which the weights of network are saved")
     parser.add_argument("--wandb", action='store_true', help="Log with wandb")
+    parser.add_argument("--wandb_name",type=str, help="set a fixed wandb run name", default=None)
     parser.add_argument("--critic_lr", type=float, default=3e-4, help='Learning rate of the critic')
     parser.add_argument("--actor_lr", type=float, default=3e-4, help='Learning rate of the actor')
     parser.add_argument("--mini_batch_size", default=256, help="Mini batch size")
@@ -193,6 +196,7 @@ if __name__ == "__main__":
     parser.add_argument("--policy_update_frequency", default=2, help="Frequency for the policy update")
     parser.add_argument("--tdc_bc_alpha", default=2.5, help="hyperparameter alpha")
     parser.add_argument('--max_episode_steps', type=int, help='Maximum steps per episode of agent.')
+    parser.add_argument('--use_rem', type=bool, help='Use a rem like critic.')
     
     parser.add_argument('--cfg', type=str, help='path to json config file',
                         default='parameter_files/td3+bc_parameters.json')

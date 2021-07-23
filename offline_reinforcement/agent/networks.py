@@ -104,11 +104,12 @@ class CriticREM(nn.Module):
     by Fujimoto and Gu et.al"""
 
     def __init__(self, in_features, out_features=1, num_heads=200):
-        super(Critic, self).__init__()
+        super(CriticREM, self).__init__()
         self.lin1 = nn.Linear(in_features=in_features, out_features=256)
         self.lin2 = nn.Linear(in_features=256, out_features=256)
         self.heads = nn.ModuleList([nn.Linear(in_features=256, out_features=out_features) for x in range(num_heads)])
         self.relu = nn.ReLU()
+        self.num_heads = num_heads
 
     def forward(self, state, action, alphas):
 
