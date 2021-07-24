@@ -47,15 +47,15 @@ def train(params, seed: int = 42, log_wb: bool = False, logging_freq: int = 1000
             min_action = torch.from_numpy(env.action_spec().minimum.astype(np.float32)).to(device)
             observation_space = 17
             env.close()
-        elif params.env_name == 'human':
-            env = suite.load('human', 'run')
+        elif params.env_name == 'humanoid':
+            env = suite.load('humanoid', 'run')
             action_space = env.action_spec().shape[0]
             max_action = torch.from_numpy(env.action_spec().maximum.astype(np.float32)).to(device)
             min_action = torch.from_numpy(env.action_spec().minimum.astype(np.float32)).to(device)
-            # observation_space = #TODO
+            observation_space = 67
             env.close()
         else:
-            print('Unsupported env_name for gym envirionment. Use cheetah or human')
+            print('Unsupported env_name for gym envirionment. Use cheetah or humanoid')
             return
         
         # Load the dataset, using_d4rl=using_d4rl
@@ -155,10 +155,10 @@ def online_validation(agent, env_name, env_type, seed=42, num_episodes=10, statu
         # get the envirionment infos
         if env_name == 'cheetah':
             env = suite.load('cheetah', 'run', task_kwargs={'random' : seed})
-        elif env_name == 'human':
-            env = suite.load('human', 'run', task_kwargs={'random' : seed})
+        elif env_name == 'humanoid':
+            env = suite.load('humanoid', 'run', task_kwargs={'random' : seed})
         else:
-            print('Unsupported env_name for gym envirionment. Use cheetah or human')
+            print('Unsupported env_name for gym envirionment. Use cheetah or humanoid')
             return
     elif env_type == 'gym':
         import d4rl
@@ -184,7 +184,13 @@ def online_validation(agent, env_name, env_type, seed=42, num_episodes=10, statu
         else:
             unplugged_rl_step_count = 0
             time_step = env.reset()
-            state = np.concatenate((time_step.observation['position'], time_step.observation['velocity']))
+            if env_name == "cheetah":
+                state = np.concatenate((time_step.observation['position'], time_step.observation['velocity']))
+            else:
+                state = np.concatenate((time_step.observation['velocity'], time_step.observation['com_velocity'],
+                                        time_step.observation['torso_vertical'], time_step.observation['extremities'],
+                                        np.expand_dims(np.array(time_step.observation['head_height']), axis=0), time_step.observation['joint_angles']))
+
             state = (state-agent.replay_buffer.mean)/agent.replay_buffer.std
             state = torch.from_numpy(state).float()
 
@@ -199,7 +205,16 @@ def online_validation(agent, env_name, env_type, seed=42, num_episodes=10, statu
                     time.sleep(0.01)
             else:
                 time_step = env.step(action)
-                state = np.concatenate((time_step.observation['position'], time_step.observation['velocity']))
+                if render:
+                    viewer.launch(env, agent.render_policy)
+
+                if env_name == "cheetah":
+                    state = np.concatenate((time_step.observation['position'], time_step.observation['velocity']))
+                else:
+                    state = np.concatenate((time_step.observation['velocity'], time_step.observation['com_velocity'],
+                                        time_step.observation['torso_vertical'], time_step.observation['extremities'],
+                                        np.expand_dims(np.array(time_step.observation['head_height']), axis=0), time_step.observation['joint_angles']))
+
                 state = (state-agent.replay_buffer.mean)/agent.replay_buffer.std
                 state = torch.from_numpy(state).float()
                 reward = time_step.reward

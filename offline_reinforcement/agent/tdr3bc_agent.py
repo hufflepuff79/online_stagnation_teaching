@@ -138,7 +138,10 @@ class TD3BC:
             self.critic_2.train()
 
     def render_policy(self, time_step):
-        state = np.concatenate((time_step.observation['position'], time_step.observation['velocity']))
+        #state = np.concatenate((time_step.observation['position'], time_step.observation['velocity']))
+        state = np.concatenate((time_step.observation['velocity'], time_step.observation['com_velocity'],
+                            time_step.observation['torso_vertical'], time_step.observation['extremities'],
+                            np.expand_dims(np.array(time_step.observation['head_height']), axis=0), time_step.observation['joint_angles']))
         state = (state-self.replay_buffer.mean)/self.replay_buffer.std
         state = torch.from_numpy(state).float()
         return self.act(state)

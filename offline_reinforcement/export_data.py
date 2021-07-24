@@ -3,8 +3,16 @@ import numpy as np
 import pickle
 import os
 import argparse
+from dm_control import suite
 
-def export_and_save_data(dir_in, dir_out, datapoints = None):
+def export_and_save_data(dir_in, dir_out, name, task):
+
+
+    env = suite.load(name, task)
+    time_step = env.reset()
+    obs_names = list(time_step.observation.keys())
+    obs_dims = [(len(x) if isinstance(x, np.ndarray) else 1) for x in time_step.observation.values()]
+    act_dim = env.action_spec().shape[0]
 
     num_shards = len(os.listdir(dir_in))
 
@@ -12,30 +20,31 @@ def export_and_save_data(dir_in, dir_out, datapoints = None):
 
     raw_dataset = tf.data.TFRecordDataset(filenames, compression_type='GZIP')
 
-    if datapoints == None:
-        datapoints = 0
-        for e in raw_dataset:
-            datapoints += 1
+    datapoints = 0
+    for e in raw_dataset:
+        datapoints += 1
 
-    data = {'observations' : np.zeros((datapoints, 17), dtype=np.float32),
-            'next_observations' : np.zeros((datapoints, 17), dtype=np.float32),
+    data = {'observations' : np.zeros((datapoints, sum(obs_dims)), dtype=np.float32),
+            'next_observations' : np.zeros((datapoints, sum(obs_dims)), dtype=np.float32),
             'rewards' : np.zeros(datapoints, dtype=np.float32),
-            'actions' : np.zeros((datapoints, 6), dtype=np.float32),
+            'actions' : np.zeros((datapoints, act_dim), dtype=np.float32),
             'terminals' : np.zeros(datapoints, dtype=np.bool)}
 
     c = 0
     for raw_record in raw_dataset:
         example = tf.train.Example()
         example.ParseFromString(raw_record.numpy())
-        sns_v = np.array(example.features.feature['observation/velocity'].float_list.value)
-        sns_p = np.array(example.features.feature['observation/position'].float_list.value)
-        data['observations'][c, :] = np.concatenate((sns_p[:8], sns_v[:9]))
-        data['next_observations'][c, :] = np.concatenate((sns_p[8:], sns_v[9:]))
-        data['actions'][c, :] = np.array(example.features.feature['action'].float_list.value)[:6]
+        l = 0
+        for name, dim in zip(obs_names, obs_dims):
+            obs =  np.array(example.features.feature[f'observation/{name}'].float_list.value)
+            data['observations'][c, l:l+dim] = obs[:dim]
+            data['next_observations'][c, l:l+dim] = obs[dim:]
+            l += dim
+        data['actions'][c, :] = np.array(example.features.feature['action'].float_list.value)[:act_dim]
         data['rewards'][c] = np.array(example.features.feature['reward'].float_list.value[0])
         c += 1
 
-    a_file = open(os.path.join(dir_out, "data.pkl"), "wb")
+    a_file = open(os.path.join(dir_out, f"{name}_data.pkl"), "wb")
     pickle.dump(data, a_file)
     a_file.close()
     
@@ -43,7 +52,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('dir_in', type=str)
     parser.add_argument('dir_out', type=str)
-    parser.add_argument('--datapoints', type=int, default=None)
+    parser.add_argument('--name', type=str, default='cheetah')
+    parser.add_argument('--task', type=str, default='run')
 
     args = parser.parse_args()
-    export_and_save_data(args.dir_in, args.dir_out, args.datapoints)
+    export_and_save_data(args.dir_in, args.dir_out, args.name, args.task)
