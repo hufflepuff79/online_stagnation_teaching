@@ -5,10 +5,10 @@ import os
 import argparse
 from dm_control import suite
 
-def export_and_save_data(dir_in, dir_out, name, task):
+def export_and_save_data(dir_in, dir_out, env_name, task):
 
 
-    env = suite.load(name, task)
+    env = suite.load(env_name, task)
     time_step = env.reset()
     obs_names = list(time_step.observation.keys())
     obs_dims = [(len(x) if isinstance(x, np.ndarray) else 1) for x in time_step.observation.values()]
@@ -44,7 +44,7 @@ def export_and_save_data(dir_in, dir_out, name, task):
         data['rewards'][c] = np.array(example.features.feature['reward'].float_list.value[0])
         c += 1
 
-    a_file = open(os.path.join(dir_out, f"{name}_data.pkl"), "wb")
+    a_file = open(os.path.join(dir_out, f"{env_name}_data.pkl"), "wb")
     pickle.dump(data, a_file)
     a_file.close()
     

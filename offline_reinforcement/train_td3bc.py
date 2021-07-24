@@ -187,9 +187,9 @@ def online_validation(agent, env_name, env_type, seed=42, num_episodes=10, statu
             if env_name == "cheetah":
                 state = np.concatenate((time_step.observation['position'], time_step.observation['velocity']))
             else:
-                state = np.concatenate((time_step.observation['velocity'], time_step.observation['com_velocity'],
-                                        time_step.observation['torso_vertical'], time_step.observation['extremities'],
-                                        np.expand_dims(np.array(time_step.observation['head_height']), axis=0), time_step.observation['joint_angles']))
+                state = np.concatenate((time_step.observation['joint_angles'], np.expand_dims(np.array(time_step.observation['head_height']), axis=0),
+                                        time_step.observation['extremities'], time_step.observation['torso_vertical'],
+                                        time_step.observation['com_velocity'], time_step.observation['velocity']))
 
             state = (state-agent.replay_buffer.mean)/agent.replay_buffer.std
             state = torch.from_numpy(state).float()
@@ -211,9 +211,9 @@ def online_validation(agent, env_name, env_type, seed=42, num_episodes=10, statu
                 if env_name == "cheetah":
                     state = np.concatenate((time_step.observation['position'], time_step.observation['velocity']))
                 else:
-                    state = np.concatenate((time_step.observation['velocity'], time_step.observation['com_velocity'],
-                                        time_step.observation['torso_vertical'], time_step.observation['extremities'],
-                                        np.expand_dims(np.array(time_step.observation['head_height']), axis=0), time_step.observation['joint_angles']))
+                    state = np.concatenate((time_step.observation['joint_angles'], np.expand_dims(np.array(time_step.observation['head_height']), axis=0),
+                                        time_step.observation['extremities'], time_step.observation['torso_vertical'],
+                                        time_step.observation['com_velocity'], time_step.observation['velocity']))
 
                 state = (state-agent.replay_buffer.mean)/agent.replay_buffer.std
                 state = torch.from_numpy(state).float()
