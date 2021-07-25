@@ -41,8 +41,8 @@ def test(params, path, epoch, environment):
         min_action = torch.from_numpy(env.action_spec().minimum.astype(np.float32)).to(device)
         observation_space = 17
         env.close()
-    # with open(params.data_dir, 'rb') as f:
-    #     dataset = pickle.load(f)
+        with open(params.data_dir, 'rb') as f:
+            dataset = pickle.load(f)
 
     # create networks 
     actor = Actor(max_action=max_action, in_features=observation_space, out_features=action_space)

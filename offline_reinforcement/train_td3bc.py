@@ -91,10 +91,10 @@ def train(params, seed: int = 42, log_wb: bool = False, logging_freq: int = 1000
     actor_target = Actor(max_action=max_action, in_features=observation_space, out_features=action_space).to(device)
 
     if use_rem:
-        critic_1 = CriticREM(in_features=observation_space+action_space).to(device)
-        critic_2 = CriticREM(in_features=observation_space+action_space).to(device)
-        critic_1_target = CriticREM(in_features=observation_space+action_space).to(device)
-        critic_2_target = CriticREM(in_features=observation_space+action_space).to(device)
+        critic_1 = CriticREM(in_features=observation_space+action_space, num_heads=params.model_num_heads).to(device)
+        critic_2 = CriticREM(in_features=observation_space+action_space, num_heads=params.model_num_heads).to(device)
+        critic_1_target = CriticREM(in_features=observation_space+action_space, num_heads=params.model_num_heads).to(device)
+        critic_2_target = CriticREM(in_features=observation_space+action_space, num_heads=params.model_num_heads).to(device)
     else:
         critic_1 = Critic(in_features=observation_space+action_space).to(device)
         critic_2 = Critic(in_features=observation_space+action_space).to(device)
@@ -243,6 +243,7 @@ if __name__ == "__main__":
     parser.add_argument("--wandb_name",type=str, help="set a fixed wandb run name", default=None)
     parser.add_argument('--use_rem', action='store_true', help='Use a rem like critic.')
     parser.add_argument('--seed', type=int, default=42, help='Use a rem like critic.')
+    parser.add_argument('--model_num_heads', type=int, default=200, help='Use a rem like critic.')
     
     parser.add_argument('--cfg', type=str, help='path to json config file',
                         default='parameter_files/td3+bc_parameters.json')
