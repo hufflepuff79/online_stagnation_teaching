@@ -91,8 +91,8 @@ def train(params, seed: int = 42, log_wb: bool = False, logging_freq: int = 1000
     agent = TD3BC(actor, actor_target, critic_1, critic_1_target,critic_2, critic_2_target,
                    actor_optimizer, critic_1_optimizer, critic_2_optimizer, tau=params.tau,
                    dataset=dataset, batch_size=params.mini_batch_size, gamma=params.discount_factor,
-                   noise_std=params.policy_noise, noise_c=params.policy_noise_clipping,
-                   min_action=min_action, max_action=max_action, alpha=params.tdc_bc_alpha, action_dim=action_space)
+                   noise_std=params.policy_noise, noise_c=params.policy_noise_clipping, min_action=min_action,
+                   max_action=max_action, alpha=params.tdc_bc_alpha, action_dim=action_space, task=params.env_name)
 
     # for logging
     sp = StatusPrinter()
@@ -128,7 +128,7 @@ def train(params, seed: int = 42, log_wb: bool = False, logging_freq: int = 1000
             agent.save(log_dir, epoch)
 
 
-def online_validation(agent, env_name, seed=42, num_episodes=10, status_func=lambda *args :None, status_arg=None, render=False):
+def online_validation(agent, env_name, seed=42, num_episodes=10, status_func=lambda *args :None, status_arg=None):
     if env_name == 'cheetah':
         env = suite.load('cheetah', 'run', task_kwargs={'random' : seed})
     elif env_name == 'humanoid':

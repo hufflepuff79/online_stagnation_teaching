@@ -16,7 +16,10 @@ class TD3BC:
     def __init__(self, actor, actor_target, critic_1, critic_1_target,
                  critic_2, critic_2_target, actor_optimizer, critic_1_optimizer,
                  critic_2_optimizer, tau, dataset, batch_size, gamma, noise_std, noise_c,
-                 min_action, max_action, alpha, action_dim):
+                 min_action, max_action, alpha, action_dim, task):
+
+        self.task = task
+
         self.actor = actor
         self.actor_target = actor_target
 
@@ -138,10 +141,13 @@ class TD3BC:
             self.critic_2.train()
 
     def render_policy(self, time_step):
-        #state = np.concatenate((time_step.observation['position'], time_step.observation['velocity']))
-        state = np.concatenate((time_step.observation['joint_angles'], np.expand_dims(np.array(time_step.observation['head_height']), axis=0),
-                                        time_step.observation['extremities'], time_step.observation['torso_vertical'],
-                                        time_step.observation['com_velocity'], time_step.observation['velocity']))
+
+        if self.task == 'cheetah':
+            state = np.concatenate((time_step.observation['position'], time_step.observation['velocity']))
+        elif self.task == 'humanoid':
+            state = np.concatenate((time_step.observation['joint_angles'], np.expand_dims(np.array(time_step.observation['head_height']), axis=0),
+                                    time_step.observation['extremities'], time_step.observation['torso_vertical'],
+                                    time_step.observation['com_velocity'], time_step.observation['velocity']))
 
         state = (state-self.replay_buffer.mean)/self.replay_buffer.std
         state = torch.from_numpy(state).float()
