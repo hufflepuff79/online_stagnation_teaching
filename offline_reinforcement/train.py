@@ -1,9 +1,6 @@
 import argparse
-
-from matplotlib.pyplot import step
 import torch
 from utils import StatusPrinter, Parameters
-from torch.utils.tensorboard import SummaryWriter
 from agent.rem_agent import REMAgent
 from agent.networks import REM
 from dopamine.discrete_domains import atari_lib as al
@@ -12,7 +9,6 @@ import numpy as np
 from os.path import exists, join
 from os import makedirs
 import wandb
-
 import time
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -23,12 +19,11 @@ def train(params, log_wb: bool = False, logging_freq: int = 1000):
     # create wandb for logging stats
     if log_wb:
         wandb.init(entity="online_stagnation_teaching", config=params.as_dict())
-    
+
     # directory to log agent parameters
     log_dir = join("train_stats", wandb.run.name if log_wb else str(int(time.time())))
     if not exists(log_dir):
         makedirs(log_dir)
-
 
     # create Atari game environment
     env = al.create_atari_environment(params.game, sticky_actions=params.env_sticky_actions)
@@ -45,11 +40,6 @@ def train(params, log_wb: bool = False, logging_freq: int = 1000):
 
     optimizer = torch.optim.Adam(Q_network.parameters(), lr=params.adam_learning_rate, eps=params.adam_epsilon)
 
-    # parallelism if multiple GPUs
-    # if torch.cuda.device_count() > 1:
-    #    Q_network = nn.DataParallel(Q_network)
-    #    Q_target_network = nn.DataParallel(Q_target_network)
-
     # Network to GPU
     Q_network = Q_network.to(device)
     Q_target_network = Q_target_network.to(device)
@@ -63,12 +53,13 @@ def train(params, log_wb: bool = False, logging_freq: int = 1000):
 
     if params.agent_state_dict:
         agent.load(params.agent_state_dict)
-    
+
     # for logging
     sp = StatusPrinter()
     sp.add_counter("epoch", "Epochs", params.epochs, 0, bold=True)
     sp.add_bar("iter", "Iteration Progress", params.iterations)
     sp.add_bar("valid", "Validation Progress", params.agent_total_steps + params.agent_episode_max_steps)
+    logging = False
 
     # initiate training
     print(f"\nStarting Training\nEpochs: {params.epochs}\nIterations per Epoch: {params.iterations}\n\n")
@@ -76,8 +67,8 @@ def train(params, log_wb: bool = False, logging_freq: int = 1000):
     # Use the smaller split ckpts or not
     try:
         load_new_buffer_params = {'suffixes': params.fixed_checkpoint,
-                                    'use_splits': True if params.num_split != 0 else False,
-                                    'max_suffix': params.num_split}
+                                  'use_splits': True if params.num_split != 0 else False,
+                                  'max_suffix': params.num_split}
     except:
         load_new_buffer_params = {'suffixes': params.fixed_checkpoint}
 
@@ -93,16 +84,20 @@ def train(params, log_wb: bool = False, logging_freq: int = 1000):
             if iteration % params.iter_buffer_update == 0:
                 agent.replay_buffer.load_new_buffer(**load_new_buffer_params)
 
-            logging = False
+            # check if logging
             if iteration % logging_freq == 0 and log_wb:
                 logging = True
 
+            # train
             loss, log_dict = agent.train_batch(logging)
             train_loss += loss
 
+            # log the results
             if logging:
                 wandb.log({**log_dict, **{'epoch' : epoch}})
+                logging = False
 
+            # update the target
             if (iteration+1) % params.iter_target_update == 0:
                 agent.update_target()
 
@@ -118,7 +113,7 @@ def train(params, log_wb: bool = False, logging_freq: int = 1000):
 
         # online validation
         agent.set_net_status(eval=True)
-        # TODO: instead of playing to terminal state, play for certain amount of steps?
+        
         sp.print_statement("valid")
         sp.reset_element("valid")
 
@@ -150,11 +145,14 @@ def online_validation(agent, env, total_steps, episode_max_steps, status_func=la
     num_episodes = 0
     total_freq_actions = np.zeros(env.action_space.n)
 
+    # only start a new episode if step count is below total steps
     while tsc < total_steps:
 
         # episode step count
         esc = 0
         done = False
+
+        # reset environment
         state = env.reset()
         state = torch.from_numpy(state).float()
         state = torch.reshape(state, (1, 1, state.shape[0], state.shape[1]))
@@ -162,6 +160,7 @@ def online_validation(agent, env, total_steps, episode_max_steps, status_func=la
 
         freq_actions = np.zeros(env.action_space.n)
 
+        # either episode ends naturally or is terminated after max steps
         while not done and esc < episode_max_steps:
             action = agent.act(state, deterministic=False)
             state, reward, done, _ = env.step(action)
