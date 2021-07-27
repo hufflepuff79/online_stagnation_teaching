@@ -5,8 +5,8 @@ import os
 import argparse
 from dm_control import suite
 
-def export_and_save_data(dir_in, dir_out, env_name, task):
 
+def export_and_save_data(dir_in, dir_out, env_name, task):
 
     env = suite.load(env_name, task)
     time_step = env.reset()
@@ -24,22 +24,22 @@ def export_and_save_data(dir_in, dir_out, env_name, task):
     for e in raw_dataset:
         datapoints += 1
 
-    data = {'observations' : np.zeros((datapoints, sum(obs_dims)), dtype=np.float32),
-            'next_observations' : np.zeros((datapoints, sum(obs_dims)), dtype=np.float32),
-            'rewards' : np.zeros(datapoints, dtype=np.float32),
-            'actions' : np.zeros((datapoints, act_dim), dtype=np.float32),
-            'terminals' : np.zeros(datapoints, dtype=np.bool)}
+    data = {'observations': np.zeros((datapoints, sum(obs_dims)), dtype=np.float32),
+            'next_observations': np.zeros((datapoints, sum(obs_dims)), dtype=np.float32),
+            'rewards': np.zeros(datapoints, dtype=np.float32),
+            'actions': np.zeros((datapoints, act_dim), dtype=np.float32),
+            'terminals': np.zeros(datapoints, dtype=np.bool)}
 
     c = 0
     for raw_record in raw_dataset:
         example = tf.train.Example()
         example.ParseFromString(raw_record.numpy())
-        l = 0
+        length = 0
         for name, dim in zip(obs_names, obs_dims):
-            obs =  np.array(example.features.feature[f'observation/{name}'].float_list.value)
-            data['observations'][c, l:l+dim] = obs[:dim]
-            data['next_observations'][c, l:l+dim] = obs[dim:]
-            l += dim
+            obs = np.array(example.features.feature[f'observation/{name}'].float_list.value)
+            data['observations'][c, length:length+dim] = obs[:dim]
+            data['next_observations'][c, length:length+dim] = obs[dim:]
+            length += dim
         data['actions'][c, :] = np.array(example.features.feature['action'].float_list.value)[:act_dim]
         data['rewards'][c] = np.array(example.features.feature['reward'].float_list.value[0])
         c += 1
@@ -47,7 +47,8 @@ def export_and_save_data(dir_in, dir_out, env_name, task):
     a_file = open(os.path.join(dir_out, f"{env_name}_data.pkl"), "wb")
     pickle.dump(data, a_file)
     a_file.close()
-    
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('dir_in', type=str)
