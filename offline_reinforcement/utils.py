@@ -47,14 +47,15 @@ class StatusPrinter:
         self.elements[name][1].reset()
 
     def done_element(self, name: str):
-        
+
         if self.elements[name][2] == "counter":
             print("\033[32m"+self.elements[name][0]+": {}/{}".format(self.elements[name][1].value,
-                                                          self.elements[name][1].max_value)+"\033[0m")
+                  self.elements[name][1].max_value)+"\033[0m")
 
         elif self.elements[name][2] == "bar":
             self.elements[name][1].set_value(self.elements[name][1].max_value)
             print("  "+str(self.elements[name][1]), end="\n")
+
 
 class ProgressBar:
 
@@ -73,7 +74,6 @@ class ProgressBar:
     def set_value(self, value):
         self.value = value
         self.blocks = int(self.value / self.block_size)
-
 
     def reset(self):
         self.value = 0
@@ -108,14 +108,13 @@ class Parameters:
             setattr(self, key, data[key][0])
             setattr(self.help, key, data[key][1])
 
-    def overload(self, other, ignore = []):
+    def overload(self, other, ignore=[]):
         for arg in vars(other):
             if arg not in ignore and getattr(other, arg):
                 setattr(self, arg, getattr(other, arg))
 
     def as_dict(self):
-        return {key:val for key, val in self.__dict__.items() if (key != "fixed" and key != "help")}
-
+        return {key: val for key, val in self.__dict__.items() if (key != "fixed" and key != "help")}
 
     def __setattr__(self, name: str, value):
 
@@ -133,16 +132,7 @@ class Parameters:
                 out += " <tr> <td> "+name+" </td> <td> {} </td> </tr> ".format(getattr(self, name))
         out += "</tbody> </table>"
         return out
-    
+
     def __repr(self):
 
         return str(self)
-
-
-
-
-
-
-
-
-

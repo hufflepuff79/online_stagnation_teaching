@@ -14,7 +14,7 @@ class REMAgent:
 
     def __init__(self, Q: nn.Module, Q_target: nn.Module, num_actions: int, data_dir: str,
                  optimizer: torch.optim.Optimizer, batch_size: int = 32,
-                 epsilon: int = 0.001, gamma: int = 0.99, history: int = 4, suffixes = None, n_ckpts = 1):
+                 epsilon: int = 0.001, gamma: int = 0.99, history: int = 4, suffixes: list = None, n_ckpts: int = 1):
 
         # setup networks
         self.Q = Q
@@ -44,7 +44,9 @@ class REMAgent:
         # history
         self.history = history
 
-    def train_batch(self, logging: bool = False, epoch: int = 0) -> None:
+    def train_batch(self, logging: bool = False) -> None:
+        """
+        """
 
         # set network to train mode
         self.set_net_status(eval=False)
@@ -63,12 +65,13 @@ class REMAgent:
             td_targets = batch_rewards + self.gamma * max_action_Qs * (1.0-batch_done)
 
         self.optimizer.zero_grad()
-        
+
         Q_pred = self.Q(batch_states, alphas).gather(dim=1, index=batch_actions)
         loss = self.loss_function(Q_pred, td_targets)
         loss.backward()
         self.optimizer.step()
 
+        # logging
         log = {}
 
         if logging:
@@ -91,14 +94,6 @@ class REMAgent:
 
         self.state_buffer.update(state)
         r = np.random.uniform()
-
-        """
-        fig, axs = plt.subplots(1, self.history)
-        axs = axs.flatten()
-        for i in range(self.history):
-             axs[i].imshow(self.state_buffer.states[0, i, :, :], cmap='gray')
-        plt.show()
-        """
 
         alphas = np.full(shape=self.Q.num_heads, fill_value=1/self.Q.num_heads)
 

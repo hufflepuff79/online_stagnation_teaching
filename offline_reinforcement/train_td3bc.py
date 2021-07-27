@@ -54,7 +54,7 @@ def train(params, seed: int = 42, log_wb: bool = False, logging_freq: int = 1000
     else:
         print('Unsupported env_name for gym envirionment. Use cheetah or humanoid')
         return
-    
+
     # Load the dataset
     try:
         path = ''
@@ -66,7 +66,7 @@ def train(params, seed: int = 42, log_wb: bool = False, logging_freq: int = 1000
         print(f'Unable to load the pickled data from {path}')
         return
 
-    # create networks 
+    # create networks
     actor = Actor(max_action=max_action, in_features=observation_space, out_features=action_space).to(device)
     actor_target = Actor(max_action=max_action, in_features=observation_space, out_features=action_space).to(device)
 
@@ -81,18 +81,17 @@ def train(params, seed: int = 42, log_wb: bool = False, logging_freq: int = 1000
         critic_1_target = Critic(in_features=observation_space+action_space).to(device)
         critic_2_target = Critic(in_features=observation_space+action_space).to(device)
 
-    # create optimizers 
+    # create optimizers
     actor_optimizer = torch.optim.Adam(actor.parameters(), lr=params.actor_lr)
     critic_1_optimizer = optimizer = torch.optim.Adam(critic_1.parameters(), lr=params.critic_lr)
     critic_2_optimizer = optimizer = torch.optim.Adam(critic_2.parameters(), lr=params.critic_lr)
 
-
     # create the TD3+BC agent
-    agent = TD3BC(actor, actor_target, critic_1, critic_1_target,critic_2, critic_2_target,
-                   actor_optimizer, critic_1_optimizer, critic_2_optimizer, tau=params.tau,
-                   dataset=dataset, batch_size=params.mini_batch_size, gamma=params.discount_factor,
-                   noise_std=params.policy_noise, noise_c=params.policy_noise_clipping, min_action=min_action,
-                   max_action=max_action, alpha=params.tdc_bc_alpha, action_dim=action_space, task=params.env_name)
+    agent = TD3BC(actor, actor_target, critic_1, critic_1_target, critic_2, critic_2_target,
+                  actor_optimizer, critic_1_optimizer, critic_2_optimizer, tau=params.tau,
+                  dataset=dataset, batch_size=params.mini_batch_size, gamma=params.discount_factor,
+                  noise_std=params.policy_noise, noise_c=params.policy_noise_clipping, min_action=min_action,
+                  max_action=max_action, alpha=params.tdc_bc_alpha, action_dim=action_space, task=params.env_name)
 
     # for logging
     sp = StatusPrinter()
@@ -115,38 +114,40 @@ def train(params, seed: int = 42, log_wb: bool = False, logging_freq: int = 1000
 
         sp.print_statement("valid")
         sp.reset_element("valid")
-        total_reward = online_validation(agent=agent, env_name=params.env_name, seed=seed, num_episodes=params.validation_runs, status_func=sp.increment_and_print,
-                                        status_arg="valid")
+        total_reward = online_validation(agent=agent, env_name=params.env_name, seed=seed,
+                                         num_episodes=params.validation_runs, status_func=sp.increment_and_print,
+                                         status_arg="valid")
         sp.done_element("valid")
-      
+
         print(total_reward)
         if log_wb:
-            wandb.log({'Average Reward' : total_reward, 'epoch': epoch})
+            wandb.log({'Average Reward': total_reward, 'epoch': epoch})
 
         # save weights at regular intervals
         if epoch % params.agent_save_weights == 0:
             agent.save(log_dir, epoch)
 
 
-def online_validation(agent, env_name, seed=42, num_episodes=10, status_func=lambda *args :None, status_arg=None):
+def online_validation(agent, env_name, seed=42, num_episodes=10, status_func=lambda *args: None, status_arg=None):
     if env_name == 'cheetah':
-        env = suite.load('cheetah', 'run', task_kwargs={'random' : seed})
+        env = suite.load('cheetah', 'run', task_kwargs={'random': seed})
     elif env_name == 'humanoid':
-        env = suite.load('humanoid', 'run', task_kwargs={'random' : seed})
+        env = suite.load('humanoid', 'run', task_kwargs={'random': seed})
     else:
         print('Unsupported env_name for gym envirionment. Use cheetah or humanoid')
         return
-    
+
     total_reward = 0
     for _ in range(num_episodes):
-        
+
         done = False
         unplugged_rl_step_count = 0
         time_step = env.reset()
         if env_name == "cheetah":
             state = np.concatenate((time_step.observation['position'], time_step.observation['velocity']))
         else:
-            state = np.concatenate((time_step.observation['joint_angles'], np.expand_dims(np.array(time_step.observation['head_height']), axis=0),
+            state = np.concatenate((time_step.observation['joint_angles'],
+                                    np.expand_dims(np.array(time_step.observation['head_height']), axis=0),
                                     time_step.observation['extremities'], time_step.observation['torso_vertical'],
                                     time_step.observation['com_velocity'], time_step.observation['velocity']))
 
@@ -160,9 +161,10 @@ def online_validation(agent, env_name, seed=42, num_episodes=10, status_func=lam
             if env_name == "cheetah":
                 state = np.concatenate((time_step.observation['position'], time_step.observation['velocity']))
             else:
-                state = np.concatenate((time_step.observation['joint_angles'], np.expand_dims(np.array(time_step.observation['head_height']), axis=0),
-                                    time_step.observation['extremities'], time_step.observation['torso_vertical'],
-                                    time_step.observation['com_velocity'], time_step.observation['velocity']))
+                state = np.concatenate((time_step.observation['joint_angles'],
+                                       np.expand_dims(np.array(time_step.observation['head_height']), axis=0),
+                                       time_step.observation['extremities'], time_step.observation['torso_vertical'],
+                                       time_step.observation['com_velocity'], time_step.observation['velocity']))
 
             state = (state-agent.replay_buffer.mean)/agent.replay_buffer.std
             state = torch.from_numpy(state).float()
@@ -177,6 +179,7 @@ def online_validation(agent, env_name, seed=42, num_episodes=10, status_func=lam
     env.close()
     return total_reward
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Parser to Initiate Agent Training")
     parser.add_argument('--env_name', type=str, default='cheetah', help='Name of the environment (cheetah or human)')
@@ -186,11 +189,11 @@ if __name__ == "__main__":
     parser.add_argument('--validation_runs', type=int, default=10, help='How many runs to make for test evaluation. Average over runs is returned')
     parser.add_argument("--agent_save_weights", type=int, default=100, help="Frequency at which the weights of network are saved")
     parser.add_argument("--wandb", action='store_true', help="Log with wandb")
-    parser.add_argument("--wandb_name",type=str, help="set a fixed wandb run name", default=None)
+    parser.add_argument("--wandb_name", type=str, help="set a fixed wandb run name", default=None)
     parser.add_argument('--use_rem', action='store_true', help='Use a rem like critic.')
     parser.add_argument('--seed', type=int, default=42, help='Use a rem like critic.')
     parser.add_argument('--model_num_heads', type=int, default=200, help='Use a rem like critic.')
-    
+
     parser.add_argument('--cfg', type=str, help='path to json config file',
                         default='parameter_files/td3+bc_parameters.json')
     args = parser.parse_args()
@@ -198,7 +201,7 @@ if __name__ == "__main__":
     params = Parameters(args.cfg)
 
     params.overload(args, ignore=['cfg'])
-    
+
     params.fix()
 
     train(params, log_wb=args.wandb, seed=args.seed, use_rem=args.use_rem)

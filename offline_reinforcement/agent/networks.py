@@ -90,13 +90,14 @@ class Critic(nn.Module):
         self.relu = nn.ReLU()
 
     def forward(self, state, action):
-        x = torch.cat((state,action), dim=1)
+        x = torch.cat((state, action), dim=1)
         x = self.lin1(x)
         x = self.relu(x)
         x = self.lin2(x)
         x = self.relu(x)
         x = self.lin3(x)
         return x
+
 
 class CriticREM(nn.Module):
     """Used for TD3+BC Algorithm based on
@@ -116,8 +117,7 @@ class CriticREM(nn.Module):
         if len(alphas) != self.num_heads:
             raise ValueError("weights need too be of same length as network heads")
 
-
-        x = torch.cat((state,action), dim=1)
+        x = torch.cat((state, action), dim=1)
         x = self.lin1(x)
         x = self.relu(x)
         x = self.lin2(x)

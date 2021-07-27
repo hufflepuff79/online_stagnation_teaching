@@ -30,19 +30,3 @@ class ReplayBufferD4RL():
             batch_done[idx, :] = torch.from_numpy(np.asarray(self.data['terminals'][rnd_idx]))
 
         return batch_state, batch_actions, batch_reward, batch_next_state, batch_done
-        
-        
-    def get_static_minibatch(self, batch_size: int = 32):
-        batch_state = torch.empty(batch_size, self.observation_dim, dtype=torch.float32).to(device)
-        batch_next_state = torch.empty(batch_size, self.observation_dim, dtype=torch.float32).to(device)
-        batch_actions = torch.empty(batch_size, self.action_dim, dtype=torch.float32).to(device)
-        batch_reward = torch.empty(batch_size, 1, dtype=torch.float32).to(device)
-        batch_done = torch.empty(batch_size, 1, dtype=torch.int).to(device)
-        for idx, rnd_idx in enumerate(range(batch_size)):
-            batch_state[idx, :] = torch.from_numpy(self.data['observations'][rnd_idx])
-            batch_next_state[idx, :] = torch.from_numpy(self.data['next_observations'][rnd_idx])
-            batch_actions[idx, :] = torch.from_numpy(self.data['actions'][rnd_idx])
-            batch_reward[idx, :] = torch.from_numpy(np.asarray(self.data['rewards'][rnd_idx]))
-            batch_done[idx, :] = torch.from_numpy(np.asarray(self.data['terminals'][rnd_idx]))
-
-        return batch_state, batch_actions, batch_reward, batch_next_state, batch_done

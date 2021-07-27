@@ -60,32 +60,29 @@ class TD3BC:
 
         states, actions, rewards, next_states, done = self.replay_buffer.get_minibatch(self.batch_size)
 
-       
         with torch.no_grad():
 
             noise = torch.clamp(torch.empty(self.batch_size, self.action_dim).normal_(mean=0, std=self.noise_std), -self.noise_c, self.noise_c)
-            next_actions = torch.clamp(self.actor_target(next_states) + noise, self.min_action.detach().numpy()[0], self.max_action.detach().numpy()[0])
+            next_actions = torch.clamp(self.actor_target(next_states) + noise,
+                                       self.min_action.detach().numpy()[0], self.max_action.detach().numpy()[0])
 
             if isinstance(self.critic_1, CriticREM):
-            
+
                 # random weights
                 alphas1 = np.random.uniform(low=0, high=1, size=self.critic_1.num_heads)
                 alphas1 = alphas1/np.sum(alphas1)
                 alphas2 = np.random.uniform(low=0, high=1, size=self.critic_1.num_heads)
                 alphas2 = alphas2/np.sum(alphas2)
- 
+
                 Q_val_1 = self.critic_1_target(next_states, next_actions, alphas1)
                 Q_val_2 = self.critic_2_target(next_states, next_actions, alphas2)
 
-
             else:
-                
+
                 Q_val_1 = self.critic_1_target(next_states, next_actions)
                 Q_val_2 = self.critic_2_target(next_states, next_actions)
 
-
             td_targets = rewards + self.gamma * torch.minimum(Q_val_1, Q_val_2) * (1.0 - done)
-
 
         if isinstance(self.critic_1, CriticREM):
 
@@ -93,11 +90,9 @@ class TD3BC:
             Q_pred_2 = self.critic_2(states, actions, alphas2)
 
         else:
-            
+
             Q_pred_1 = self.critic_1(states, actions)
             Q_pred_2 = self.critic_2(states, actions)
-
-
 
         # optimize critic networks
         self.critic_1_optim.zero_grad()
@@ -112,7 +107,7 @@ class TD3BC:
 
         if optim_actor:
             self.actor_optim.zero_grad()
-            
+
             # loss function
             pi = self.actor(states)
             if isinstance(self.critic_1, CriticREM):
@@ -120,12 +115,12 @@ class TD3BC:
                 Q_pred = self.critic_1(states, pi, alphas)
             else:
                 Q_pred = self.critic_1(states, pi)
-            l = self.alpha/Q_pred.abs().mean().detach()
-            actor_loss = - l * Q_pred.mean() + F.mse_loss(pi, actions)
+            pre_loss = self.alpha/Q_pred.abs().mean().detach()
+            actor_loss = - pre_loss * Q_pred.mean() + F.mse_loss(pi, actions)
             actor_loss.backward()
             self.actor_optim.step()
 
-            #update the models
+            # update the models
             self.update_target_actor()
             self.update_target_critic()
 
@@ -145,7 +140,8 @@ class TD3BC:
         if self.task == 'cheetah':
             state = np.concatenate((time_step.observation['position'], time_step.observation['velocity']))
         elif self.task == 'humanoid':
-            state = np.concatenate((time_step.observation['joint_angles'], np.expand_dims(np.array(time_step.observation['head_height']), axis=0),
+            state = np.concatenate((time_step.observation['joint_angles'],
+                                    np.expand_dims(np.array(time_step.observation['head_height']), axis=0),
                                     time_step.observation['extremities'], time_step.observation['torso_vertical'],
                                     time_step.observation['com_velocity'], time_step.observation['velocity']))
 
@@ -153,13 +149,11 @@ class TD3BC:
         state = torch.from_numpy(state).float()
         return self.act(state)
 
-
     def update_target_critic(self):
         for target_param, param in zip(self.critic_1_target.parameters(), self.critic_1.parameters()):
             target_param.data.copy_(target_param.data * (1.0 - self.tau) + param.data * self.tau)
         for target_param, param in zip(self.critic_2_target.parameters(), self.critic_2.parameters()):
             target_param.data.copy_(target_param.data * (1.0 - self.tau) + param.data * self.tau)
-
 
     def update_target_actor(self):
         for target_param, param in zip(self.actor_target.parameters(), self.actor.parameters()):
@@ -170,7 +164,6 @@ class TD3BC:
         return action.detach().numpy()
 
     def save(self, file_path, epoch):
-        #TODO: careful that the path contains the epoch name, otherwise will overwrite every save step
         torch.save(self.critic_1.state_dict(), join(file_path, f"critic_1_epoch_{epoch}.pth"))
         torch.save(self.critic_2.state_dict(), join(file_path, f"critic_2_epoch_{epoch}.pth"))
         torch.save(self.actor.state_dict(), join(file_path, f"actor_epoch_{epoch}.pth"))

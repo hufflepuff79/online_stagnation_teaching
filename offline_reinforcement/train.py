@@ -69,7 +69,7 @@ def train(params, log_wb: bool = False, logging_freq: int = 1000):
         load_new_buffer_params = {'suffixes': params.fixed_checkpoint,
                                   'use_splits': True if params.num_split != 0 else False,
                                   'max_suffix': params.num_split}
-    except:
+    except Exception:
         load_new_buffer_params = {'suffixes': params.fixed_checkpoint}
 
     for epoch in range(params.epochs):
@@ -94,26 +94,25 @@ def train(params, log_wb: bool = False, logging_freq: int = 1000):
 
             # log the results
             if logging:
-                wandb.log({**log_dict, **{'epoch' : epoch}})
+                wandb.log({**log_dict, **{'epoch': epoch}})
                 logging = False
 
             # update the target
             if (iteration+1) % params.iter_target_update == 0:
                 agent.update_target()
 
-
             sp.increment_and_print("iter")
 
         sp.done_element("iter")
         train_loss /= params.iterations
-      
+
         if log_wb:
-            wandb.log({'Training/Avg_Loss' : train_loss, 'epoch': epoch})
+            wandb.log({'Training/Avg_Loss': train_loss, 'epoch': epoch})
         print(f"Average Training Loss: {train_loss}")
 
         # online validation
         agent.set_net_status(eval=True)
-        
+
         sp.print_statement("valid")
         sp.reset_element("valid")
 
@@ -126,9 +125,9 @@ def train(params, log_wb: bool = False, logging_freq: int = 1000):
 
         if log_wb:
             for i, freq in enumerate(action_freq):
-                wandb.log({f'ActionFrequency/A{i}: {action_names[i]}' : freq, 'epoch': epoch})
-    
-            wandb.log({'Validation/Avg_Reward' : average_reward, 'epoch': epoch})
+                wandb.log({f'ActionFrequency/A{i}: {action_names[i]}': freq, 'epoch': epoch})
+
+            wandb.log({'Validation/Avg_Reward': average_reward, 'epoch': epoch})
         print(f"Average Reward: {average_reward}\n")
 
         # save weights at regular intervals
@@ -137,10 +136,11 @@ def train(params, log_wb: bool = False, logging_freq: int = 1000):
             agent.save(weights_file)
 
 
-def online_validation(agent, env, total_steps, episode_max_steps, status_func=lambda *args :None, status_arg=None, render=False):
+def online_validation(agent, env, total_steps, episode_max_steps,
+                      status_func=lambda *args: None, status_arg=None, render=False):
 
     # total step count
-    tsc = 0 
+    tsc = 0
     total_reward = 0
     num_episodes = 0
     total_freq_actions = np.zeros(env.action_space.n)
@@ -178,7 +178,7 @@ def online_validation(agent, env, total_steps, episode_max_steps, status_func=la
             status_func(status_arg)
 
         num_episodes += 1
-        total_freq_actions += freq_actions 
+        total_freq_actions += freq_actions
 
     total_freq_actions /= tsc
     total_reward /= num_episodes
@@ -197,7 +197,7 @@ if __name__ == "__main__":
     parser.add_argument('--iter_buffer_update', type=int, help='Every <iter_buffer_update> iteraions, a new buffer is loaded from the transition data')
     parser.add_argument('--adam_learning_rate', type=float, help='Learning rate of ADAM optimizer')
     parser.add_argument('--adam_epsilon', type=float, help='Stabilization term of ADAM optimizer')
-    parser.add_argument('--model_num_heads', type=int, help='Number of heads of the REM')  
+    parser.add_argument('--model_num_heads', type=int, help='Number of heads of the REM')
     parser.add_argument('--agent_epsilon', type=float, help='Epsilon-greedy parameter for acting of the agent')
     parser.add_argument('--agent_gamma', type=float, help='Discount factor of the REM agent')
     parser.add_argument('--agent_history', type=int, help='Number of states which are stacked as a multi-channel image in one go into the REM')
@@ -211,7 +211,7 @@ if __name__ == "__main__":
     parser.add_argument("--n_ckpts", type=int, help="Number of checkpoints loaded in replay buffer at once")
     parser.add_argument("--num_split", type=int, default=0, help="Only set if you want to use the split checkpoints. Then set this parameter to the max index of a split_ckpt")
     parser.add_argument("--wandb", action='store_true', help="Log with wandb")
-    
+
     parser.add_argument('--cfg', type=str, help='path to json config file',
                         default='parameter_files/paper_parameters.json')
     args = parser.parse_args()
@@ -219,7 +219,7 @@ if __name__ == "__main__":
     params = Parameters(args.cfg)
 
     params.overload(args, ignore=['cfg'])
-    
+
     params.fix()
 
     train(params, log_wb=args.wandb)
